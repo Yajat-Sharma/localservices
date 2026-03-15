@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -17,3 +18,4 @@ export async function PATCH(req: NextRequest) {
   const user = await prisma.user.update({ where: { id: currentUser.id }, data: updateData, include: { provider: { include: { category: true } } } });
   return NextResponse.json({ user });
 }
+

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
 import { uploadImage } from "@/lib/cloudinary";
@@ -15,3 +16,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url });
   } catch (err) { return NextResponse.json({ error: "Upload failed" }, { status: 500 }); }
 }
+

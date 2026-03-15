@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
@@ -24,3 +25,4 @@ export async function POST(req: NextRequest) {
   else await prisma.provider.update({ where: { id: providerId }, data: { totalBookings: { increment: 1 } } });
   return NextResponse.json({ booking }, { status: 201 });
 }
+

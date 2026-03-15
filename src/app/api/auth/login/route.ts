@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { admin } from "@/lib/firebase-admin";
 import { prisma } from "@/lib/prisma";
@@ -14,3 +15,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ token, user });
   } catch (err) { console.error("Login error:", err); return NextResponse.json({ error: "Authentication failed" }, { status: 401 }); }
 }
+

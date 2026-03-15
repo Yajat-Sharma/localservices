@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 export async function GET() {
@@ -9,3 +10,4 @@ export async function GET() {
   const limit = parseInt(setting?.value || "50");
   return NextResponse.json({ categories, freeSlots: Math.max(0, limit - count) });
 }
+

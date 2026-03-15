@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
@@ -36,3 +37,4 @@ export async function POST(req: NextRequest) {
   await prisma.user.update({ where: { id: user.id }, data: { role: "PROVIDER" } });
   return NextResponse.json({ provider });
 }
+
