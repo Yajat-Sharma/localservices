@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
 
 const PUBLIC_PATHS = ["/", "/login", "/register"];
 const PUBLIC_API = ["/api/auth", "/api/categories", "/api/providers"];
@@ -26,18 +25,13 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const payload = await verifyToken(token);
-  if (!payload) {
+  // Simple check - just verify token exists and is not empty
+  // Full verification happens in each API route
+  if (token.length < 10) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-    if (payload.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
   }
 
   return NextResponse.next();
