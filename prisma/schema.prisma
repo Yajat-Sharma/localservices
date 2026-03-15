@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  name      String?
+  email     String?  @unique
+  avatar    String?
+  role      UserRole @default(CUSTOMER)
+  language  String   @default("en")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookingsAsCustomer Booking[]  @relation("CustomerBookings")
+  reviews            Review[]
+  provider           Provider?
+  sentMessages       Message[]  @relation("SentMessages")
+  receivedMessages   Message[]  @relation("ReceivedMessages")
+}
+
+enum UserRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+model Provider {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+  businessName     String
+  description      String?
+  categoryId       String
+  category         Category  @relation(fields: [categoryId], references: [id])
+  priceMin         Float
+  priceMax         Float
+  serviceRadius    Float     @default(5.0)
+  latitude         Float
+  longitude        Float
+  address          String
+  city             String
+  state            String
+  pincode          String
+  images           String[]  @default([])
+  whatsapp         String?
+  isAvailable      Boolean   @default(true)
+  isApproved       Boolean   @default(false)
+  isPaid           Boolean   @default(false)
+  unavailableUntil DateTime?
+  avgRating        Float     @default(0)
+  totalReviews     Int       @default(0)
+  totalBookings    Int       @default(0)
+  allowMultiple    Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  bookings Booking[]
+  reviews  Review[]
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  nameHi      String
+  icon        String
+  slug        String     @unique
+  description String?
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  providers Provider[]
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  customerId  String
+  customer    User          @relation("CustomerBookings", fields: [customerId], references: [id])
+  providerId  String
+  provider    Provider      @relation(fields: [providerId], references: [id])
+  problem     String
+  status      BookingStatus @default(PENDING)
+  scheduledAt DateTime?
+  completedAt DateTime?
+  price       Float?
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  review   Review?
+  messages Message[]
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id])
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  bookingId  String
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model AdminSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
