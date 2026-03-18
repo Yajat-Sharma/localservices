@@ -9,9 +9,10 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  phone     String   @unique
+  phone     String?  @unique  // Make phone optional
   name      String?
   email     String?  @unique
+  password  String?  // Add this line
   avatar    String?
   role      UserRole @default(CUSTOMER)
   language  String   @default("en")

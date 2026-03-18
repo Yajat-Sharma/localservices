@@ -10,6 +10,10 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 function RegisterPage() {
+  const [regMethod, setRegMethod] = useState<"email" | "phone">("email");
+  const [regName, setRegName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -120,6 +124,28 @@ function RegisterPage() {
     if (value && index < 5) document.getElementById(`reg-otp-${index+1}`)?.focus();
   };
 
+  const handleEmailRegister = async () => {
+  if (!regName || !regEmail || !regPassword) { toast.error("All fields required"); return; }
+  if (regPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+  setLoading(true);
+  try {
+    const res = await axios.post("/api/auth/register", {
+      name: regName,
+      email: regEmail,
+      password: regPassword,
+    });
+    const { token, user: userData } = res.data;
+    localStorage.setItem("auth_token", token);
+    document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}`;
+    setToken(token);
+    setUser(userData);
+    setStep("role");
+    toast.success("Account created!");
+  } catch (err: any) {
+    toast.error(err.response?.data?.error || "Registration failed");
+  } finally { setLoading(false); }
+};
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div ref={recaptchaContainerRef} id="recaptcha-container" style={{ display: "none" }} />
@@ -131,20 +157,57 @@ function RegisterPage() {
         <LanguageSwitcher />
       </header>
       <main className="flex-1 flex flex-col justify-center px-6 pb-8 max-w-sm mx-auto w-full animate-slide-up">
-        {step === "phone" && (
+                {step === "phone" && (
           <>
             <h1 className="text-2xl font-bold mb-2">{t("signup")}</h1>
-            <p className="text-gray-500 text-sm mb-8">Create your account with phone verification</p>
-            <div className="flex gap-2 mb-4">
-              <div className="flex items-center px-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium">🇮🇳 +91</div>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g,""))} placeholder="9876543210" maxLength={10} className="input-field flex-1" onKeyDown={(e) => e.key === "Enter" && handleSendOtp()} />
+            <p className="text-gray-500 text-sm mb-6">Create your account</p>
+
+            {/* Registration method tabs */}
+            <div className="flex bg-gray-100 rounded-2xl p-1 mb-6">
+              <button
+                onClick={() => setRegMethod("email")}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${regMethod === "email" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+              >
+                📧 Email
+              </button>
+              <button
+                onClick={() => setRegMethod("phone")}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${regMethod === "phone" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
+              >
+                📱 Phone OTP
+              </button>
             </div>
-            <button onClick={handleSendOtp} disabled={loading || phone.length < 10} className="btn-primary w-full">
-              {loading ? "Sending..." : t("send_otp")}
-            </button>
-            <p className="text-center mt-6 text-sm text-gray-500">
-              Already have an account? <Link href="/login" className="text-blue-600 font-semibold">{t("login")}</Link>
-            </p>
+
+            {regMethod === "email" ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                  <input type="text" value={regName} onChange={(e) => setRegName(e.target.value)} placeholder="Your full name" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="you@example.com" className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                  <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder="Min 6 characters" className="input-field" />
+                </div>
+                <button onClick={handleEmailRegister} disabled={loading} className="btn-primary w-full">
+                  {loading ? "Creating account..." : "Create Account"}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2 mb-4">
+                  <div className="flex items-center px-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium">🇮🇳 +91</div>
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g,""))} placeholder="9876543210" maxLength={10} className="input-field flex-1" onKeyDown={(e) => e.key === "Enter" && handleSendOtp()} />
+                </div>
+                <button onClick={handleSendOtp} disabled={loading || phone.length < 10} className="btn-primary w-full">
+                  {loading ? "Sending..." : t("send_otp")}
+                </button>
+              </>
+            )}
+            <p className="text-center mt-6 text-sm text-gray-500">Already have an account? <Link href="/login" className="text-blue-600 font-semibold">{t("login")}</Link></p>
           </>
         )}
         {step === "otp" && (
