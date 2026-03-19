@@ -46,7 +46,6 @@ export default function LoginPage() {
     else router.replace("/hire");
   };
 
-  // Email login
   const handleEmailLogin = async () => {
     if (!email || !password) { toast.error("Enter email and password"); return; }
     setLoading(true);
@@ -59,7 +58,6 @@ export default function LoginPage() {
     } finally { setLoading(false); }
   };
 
-  // Phone OTP
   const clearRecaptcha = () => {
     try {
       if ((window as any).recaptchaVerifier) {
@@ -171,8 +169,21 @@ export default function LoginPage() {
                 className="input-field"
                 onKeyDown={(e) => e.key === "Enter" && handleEmailLogin()}
               />
+              {/* Forgot Password Link */}
+              <div className="text-right mt-1">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
-            <button onClick={handleEmailLogin} disabled={loading} className="btn-primary w-full">
+            <button
+              onClick={handleEmailLogin}
+              disabled={loading}
+              className="btn-primary w-full"
+            >
               {loading ? "Logging in..." : t("login")}
             </button>
           </div>
