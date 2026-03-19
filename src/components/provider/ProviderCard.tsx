@@ -30,7 +30,12 @@ export function ProviderCard({ provider, featured = false }: ProviderCardProps) 
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-bold text-gray-900 text-sm leading-tight truncate">{provider.businessName}</h3>
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight truncate flex items-center gap-1">
+                      {provider.businessName}
+                      {(provider as any).isVerified && (
+                        <span title="Verified Provider" className="text-blue-500 text-xs">✓</span>
+                      )}
+                    </h3>
                   <span className="text-xs text-gray-500">{categoryName}</span>
                 </div>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0 ${provider.isAvailable ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>

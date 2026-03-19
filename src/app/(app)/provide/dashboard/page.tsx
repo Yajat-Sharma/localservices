@@ -95,8 +95,14 @@ export default function ProviderDashboard() {
           )}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => router.push("/profile")} className="card p-4 text-left"><span className="text-2xl block mb-2">👤</span><p className="font-semibold text-sm">Edit Profile</p></button>
-          <button onClick={() => router.push("/bookings")} className="card p-4 text-left"><span className="text-2xl block mb-2">📋</span><p className="font-semibold text-sm">All Bookings</p></button>
+          <button onClick={() => router.push("/provide/edit")} className="card p-4 text-left hover:shadow-md transition-shadow">
+            <span className="text-2xl block mb-2">✏️</span>
+            <p className="font-semibold text-sm">Edit Profile</p>
+          </button>
+          <button onClick={() => router.push("/bookings")} className="card p-4 text-left hover:shadow-md transition-shadow">
+            <span className="text-2xl block mb-2">📋</span>
+            <p className="font-semibold text-sm">All Bookings</p>
+          </button>
         </div>
       </div>
     </div>
