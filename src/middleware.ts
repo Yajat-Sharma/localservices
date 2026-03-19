@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/login", "/register"];
-const PUBLIC_API = ["/api/auth", "/api/categories", "/api/providers"];
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
+
+const PUBLIC_API = [
+  "/api/auth",
+  "/api/categories",
+  "/api/providers",
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -25,8 +36,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Simple check - just verify token exists and is not empty
-  // Full verification happens in each API route
   if (token.length < 10) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
