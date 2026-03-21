@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import nodemailer from "nodemailer";
+import { createNotification } from "@/lib/notifications";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -141,3 +142,21 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ booking }, { status: 201 });
 }
+
+// Notify provider
+await createNotification({
+  userId: provider.userId,
+  title: "New Booking Request! 🔔",
+  message: `${booking.customer.name || "A customer"} needs your ${provider.category.name} service`,
+  type: "booking",
+  link: "/bookings",
+});
+
+// Notify customer
+await createNotification({
+  userId: user.id,
+  title: "Booking Sent! ✅",
+  message: `Your request has been sent to ${provider.businessName}`,
+  type: "success",
+  link: "/bookings",
+});

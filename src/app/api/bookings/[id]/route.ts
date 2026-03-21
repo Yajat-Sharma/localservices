@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import nodemailer from "nodemailer";
+import { createNotification } from "@/lib/notifications";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -47,6 +48,43 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       customer: true,
     },
   });
+  // Send notifications based on status
+if (status === "ACCEPTED") {
+  await createNotification({
+    userId: booking.customerId,
+    title: "Booking Accepted! 🎉",
+    message: `${booking.provider.businessName} accepted your booking`,
+    type: "success",
+    link: "/bookings",
+  });
+}
+
+if (status === "COMPLETED") {
+  await createNotification({
+    userId: booking.customerId,
+    title: "Service Completed! ⭐",
+    message: `Please rate your experience with ${booking.provider.businessName}`,
+    type: "success",
+    link: `/provider/${booking.providerId}`,
+  });
+  await createNotification({
+    userId: booking.provider.userId,
+    title: "Job Completed! 💰",
+    message: `You completed a job for ${booking.customer.name || "a customer"}`,
+    type: "success",
+    link: "/provide/earnings",
+  });
+}
+
+if (status === "CANCELLED") {
+  await createNotification({
+    userId: booking.customerId,
+    title: "Booking Cancelled",
+    message: `Your booking with ${booking.provider.businessName} was cancelled`,
+    type: "error",
+    link: "/hire",
+  });
+}
 
   if (status === "COMPLETED" || status === "CANCELLED") {
     if (booking.provider && !booking.provider.allowMultiple) {

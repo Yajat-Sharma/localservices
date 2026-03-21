@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { NotificationBell } from "@/components/ui/NotificationBell";
+
 interface TopNavProps { title?: string; showSearch?: boolean; onSearch?: (query: string) => void; searchValue?: string; showBack?: boolean; onBack?: () => void; rightElement?: React.ReactNode; }
 export function TopNav({ title, showSearch, onSearch, searchValue = "", showBack, onBack, rightElement }: TopNavProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -25,7 +27,12 @@ export function TopNav({ title, showSearch, onSearch, searchValue = "", showBack
           ) : (
             <h1 className="flex-1 font-bold text-lg text-gray-900">{title}</h1>
           )}
-          {rightElement || <LanguageSwitcher />}
+          {rightElement || (
+              <div className="flex items-center gap-1">
+                <NotificationBell />
+                <LanguageSwitcher />
+              </div>
+            )}
         </div>
       </header>
     </>
