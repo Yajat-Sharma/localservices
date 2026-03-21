@@ -36,6 +36,4 @@ export async function POST(req: NextRequest) {
     console.error("Email login error:", err);
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
-}git add .
-git commit --allow-empty -m "Force redeploy after schema fix"
-git push
+}
