@@ -103,7 +103,11 @@ export default function ProviderDashboard() {
               <span className="text-2xl block mb-2">💰</span>
               <p className="font-semibold text-sm">My Earnings</p>
             </button>
-            <button onClick={() => router.push("/bookings")} className="card p-4 text-left hover:shadow-md transition-shadow col-span-2">
+            <button onClick={() => router.push("/provide/documents")} className="card p-4 text-left hover:shadow-md transition-shadow">
+              <span className="text-2xl block mb-2">📄</span>
+              <p className="font-semibold text-sm">My Documents</p>
+            </button>
+            <button onClick={() => router.push("/bookings")} className="card p-4 text-left hover:shadow-md transition-shadow">
               <span className="text-2xl block mb-2">📋</span>
               <p className="font-semibold text-sm">All Bookings</p>
             </button>

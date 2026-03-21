@@ -65,6 +65,10 @@ model Provider {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   isVerified       Boolean   @default(false)
+  idProofUrl       String?
+  licenseUrl       String?
+  idProofStatus    DocumentStatus @default(PENDING)
+  licenseStatus    DocumentStatus @default(PENDING)
 
   bookings Booking[]
   reviews  Review[]
@@ -144,4 +148,10 @@ model AdminSetting {
   key       String   @unique
   value     String
   updatedAt DateTime @updatedAt
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
