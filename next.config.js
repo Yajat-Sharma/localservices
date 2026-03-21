@@ -14,5 +14,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   output: "standalone",
+  staticPageGenerationTimeout: 120,
+  experimental: {
+    serverComponentsExternalPackages: ["@prisma/client", "prisma", "bcryptjs", "nodemailer"],
+  },
 };
 module.exports = nextConfig;
