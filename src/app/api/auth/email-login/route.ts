@@ -13,12 +13,16 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase().trim() },
       include: { provider: { include: { category: true } } },
     });
 
-    if (!user || !user.password) {
+    if (!user) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    }
+
+    if (!user.password) {
+      return NextResponse.json({ error: "This account uses phone login. Please use Phone OTP." }, { status: 401 });
     }
 
     const isValid = await bcrypt.compare(password, user.password);
@@ -29,7 +33,9 @@ export async function POST(req: NextRequest) {
     const token = await signToken({ userId: user.id, role: user.role });
     return NextResponse.json({ token, user });
   } catch (err) {
-    console.error(err);
+    console.error("Email login error:", err);
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
-}
+}git add .
+git commit --allow-empty -m "Force redeploy after schema fix"
+git push
