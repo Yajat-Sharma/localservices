@@ -150,59 +150,78 @@ export default function HirePage() {
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         rightElement={
-          <div className="flex items-center gap-1">
-            {/* Voice Search Button */}
-            <button
-              onClick={startVoiceSearch}
-              className={`relative w-10 h-10 flex items-center justify-center rounded-2xl transition-all duration-200 ${
-                isListening
-                  ? "bg-red-500 text-white shadow-lg scale-110"
-                  : "hover:bg-gray-100"
-              }`}
-              title="Voice Search"
-            >
-              <span className="text-lg">{isListening ? "⏹️" : "🎤"}</span>
-              {isListening && (
-                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-400 rounded-full animate-ping" />
-              )}
-            </button>
+        <div className="flex items-center gap-1">
+          {/* Voice Search Button */}
+          <button
+            onClick={startVoiceSearch}
+            className={`relative w-10 h-10 flex items-center justify-center rounded-2xl transition-all duration-200 ${
+              isListening
+                ? "bg-red-500 text-white shadow-lg scale-110"
+                : "hover:bg-gray-100 text-gray-600"
+            }`}
+            title="Voice Search"
+          >
+            {isListening ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            )}
+            {isListening && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-300 rounded-full animate-ping" />
+            )}
+          </button>
 
-            {/* Filter Button */}
-            <button
-              onClick={() => setShowFilters(true)}
-              className={`relative w-10 h-10 flex items-center justify-center rounded-2xl transition-colors ${
-                showFilters || activeFiltersCount > 0 ? "bg-blue-500 text-white" : "hover:bg-gray-100"
-              }`}
-            >
-              <span className="text-lg">⚙️</span>
-              {activeFiltersCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </button>
+          {/* Filter Button */}
+          <button
+            onClick={() => setShowFilters(true)}
+            className={`relative w-10 h-10 flex items-center justify-center rounded-2xl transition-colors ${
+              showFilters || activeFiltersCount > 0 ? "bg-blue-500 text-white" : "hover:bg-gray-100 text-gray-600"
+            }`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+              <line x1="11" y1="18" x2="13" y2="18"/>
+            </svg>
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
 
-            {/* Location Button */}
-            <button
-              onClick={getUserLocation}
-              className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-gray-100 transition-colors"
-            >
-              📍
-            </button>
-          </div>
-        }
+          {/* Location Button */}
+          <button
+            onClick={getUserLocation}
+            className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-gray-100 transition-colors text-gray-600"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="10" r="3"/>
+              <path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/>
+            </svg>
+          </button>
+        </div>
+      }
       />
 
       {/* Voice Search Indicator */}
       {isListening && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 animate-pulse">
-          <span className="text-xl">🎤</span>
-          <span className="font-semibold text-sm">Listening... speak now</span>
-          <div className="flex gap-1">
-            <span className="w-1.5 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-            <span className="w-1.5 h-6 bg-white rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-            <span className="w-1.5 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-            <span className="w-1.5 h-6 bg-white rounded-full animate-bounce" style={{ animationDelay: "450ms" }} />
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-5 py-2.5 rounded-full shadow-xl flex items-center gap-3">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <span className="font-medium text-sm">Listening...</span>
+          <div className="flex items-end gap-0.5 h-4">
+            <span className="w-0.5 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-0.5 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-0.5 h-3 bg-white/80 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            <span className="w-0.5 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: "450ms" }} />
+            <span className="w-0.5 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "600ms" }} />
           </div>
         </div>
       )}
