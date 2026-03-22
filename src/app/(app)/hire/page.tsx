@@ -21,15 +21,15 @@ export default function HirePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
-  // Filters
   const [filters, setFilters] = useState({
     minRating: 0,
     maxPrice: 10000,
     availableOnly: false,
     verifiedOnly: false,
     radius: 5,
-    sortBy: "distance", // distance, rating, price_low, price_high
+    sortBy: "distance",
   });
 
   useEffect(() => { fetchCategories(); getUserLocation(); }, []);
@@ -53,24 +53,18 @@ export default function HirePage() {
     if (!latitude || !longitude) return;
     setLoading(true);
     try {
-      const params: any = {
-        lat: latitude,
-        lng: longitude,
-        radius: filters.radius,
-      };
+      const params: any = { lat: latitude, lng: longitude, radius: filters.radius };
       if (selectedCategory) params.category = selectedCategory;
       if (searchQuery) params.search = searchQuery;
 
       const res = await axios.get("/api/providers", { params });
       let results: any[] = res.data.providers;
 
-      // Client-side filtering
       if (filters.availableOnly) results = results.filter(p => p.isAvailable);
       if (filters.verifiedOnly) results = results.filter(p => p.isVerified);
       if (filters.minRating > 0) results = results.filter(p => p.avgRating >= filters.minRating);
       if (filters.maxPrice < 10000) results = results.filter(p => p.priceMin <= filters.maxPrice);
 
-      // Sorting
       results = [...results].sort((a, b) => {
         if (filters.sortBy === "rating") return b.avgRating - a.avgRating;
         if (filters.sortBy === "price_low") return a.priceMin - b.priceMin;
@@ -92,6 +86,54 @@ export default function HirePage() {
     return () => clearTimeout(d);
   }, [searchQuery, fetchProviders]);
 
+  const startVoiceSearch = () => {
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+      toast.error("Voice search not supported on this browser");
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.lang =
+      language === "hi" ? "hi-IN" :
+      language === "mr" ? "mr-IN" :
+      language === "gu" ? "gu-IN" :
+      language === "ta" ? "ta-IN" :
+      language === "te" ? "te-IN" :
+      language === "bn" ? "bn-IN" : "en-IN";
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    setIsListening(true);
+    toast("🎤 Listening... speak now!", { duration: 3000, icon: "🎙️" });
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setSearchQuery(transcript);
+      toast.success(`🎤 "${transcript}"`);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech error:", event.error);
+      if (event.error === "not-allowed") {
+        toast.error("Microphone access denied. Please allow microphone.");
+      } else {
+        toast.error("Could not hear you. Try again!");
+      }
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+
   const activeFiltersCount = [
     filters.minRating > 0,
     filters.maxPrice < 10000,
@@ -108,10 +150,29 @@ export default function HirePage() {
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         rightElement={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {/* Voice Search Button */}
+            <button
+              onClick={startVoiceSearch}
+              className={`relative w-10 h-10 flex items-center justify-center rounded-2xl transition-all duration-200 ${
+                isListening
+                  ? "bg-red-500 text-white shadow-lg scale-110"
+                  : "hover:bg-gray-100"
+              }`}
+              title="Voice Search"
+            >
+              <span className="text-lg">{isListening ? "⏹️" : "🎤"}</span>
+              {isListening && (
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-400 rounded-full animate-ping" />
+              )}
+            </button>
+
+            {/* Filter Button */}
             <button
               onClick={() => setShowFilters(true)}
-              className={`relative w-10 h-10 flex items-center justify-center rounded-2xl transition-colors ${showFilters || activeFiltersCount > 0 ? "bg-blue-500 text-white" : "hover:bg-gray-100"}`}
+              className={`relative w-10 h-10 flex items-center justify-center rounded-2xl transition-colors ${
+                showFilters || activeFiltersCount > 0 ? "bg-blue-500 text-white" : "hover:bg-gray-100"
+              }`}
             >
               <span className="text-lg">⚙️</span>
               {activeFiltersCount > 0 && (
@@ -120,12 +181,31 @@ export default function HirePage() {
                 </span>
               )}
             </button>
-            <button onClick={getUserLocation} className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-gray-100 transition-colors">
+
+            {/* Location Button */}
+            <button
+              onClick={getUserLocation}
+              className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-gray-100 transition-colors"
+            >
               📍
             </button>
           </div>
         }
       />
+
+      {/* Voice Search Indicator */}
+      {isListening && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 animate-pulse">
+          <span className="text-xl">🎤</span>
+          <span className="font-semibold text-sm">Listening... speak now</span>
+          <div className="flex gap-1">
+            <span className="w-1.5 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-1.5 h-6 bg-white rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-1.5 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            <span className="w-1.5 h-6 bg-white rounded-full animate-bounce" style={{ animationDelay: "450ms" }} />
+          </div>
+        </div>
+      )}
 
       {/* Hero Banner */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-5 pb-8">
@@ -134,34 +214,13 @@ export default function HirePage() {
         </h2>
         <p className="text-blue-200 text-sm mt-0.5">What service do you need today?</p>
 
-        {/* Active filters bar */}
         {activeFiltersCount > 0 && (
           <div className="flex items-center gap-2 mt-3 overflow-x-auto scrollbar-hide">
-            {filters.availableOnly && (
-              <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">
-                ✓ Available
-              </span>
-            )}
-            {filters.verifiedOnly && (
-              <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">
-                ✓ Verified
-              </span>
-            )}
-            {filters.minRating > 0 && (
-              <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">
-                ⭐ {filters.minRating}+
-              </span>
-            )}
-            {filters.maxPrice < 10000 && (
-              <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">
-                ₹ Max {filters.maxPrice}
-              </span>
-            )}
-            {filters.radius !== 5 && (
-              <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">
-                📍 {filters.radius}km
-              </span>
-            )}
+            {filters.availableOnly && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">✓ Available</span>}
+            {filters.verifiedOnly && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">✓ Verified</span>}
+            {filters.minRating > 0 && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">⭐ {filters.minRating}+</span>}
+            {filters.maxPrice < 10000 && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">₹ Max {filters.maxPrice}</span>}
+            {filters.radius !== 5 && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">📍 {filters.radius}km</span>}
             <button
               onClick={() => setFilters({ minRating: 0, maxPrice: 10000, availableOnly: false, verifiedOnly: false, radius: 5, sortBy: "distance" })}
               className="flex-shrink-0 bg-red-400/80 text-white text-xs px-3 py-1 rounded-full"
@@ -172,7 +231,7 @@ export default function HirePage() {
         )}
       </div>
 
-      {/* Categories - overlapping the hero */}
+      {/* Categories */}
       <div className="px-4 -mt-4">
         <div className="bg-white rounded-3xl shadow-card p-3">
           <div className="grid grid-cols-4 gap-2">
@@ -181,9 +240,7 @@ export default function HirePage() {
                 key={cat.id}
                 onClick={() => setSelectedCategory(prev => prev === cat.slug ? null : cat.slug)}
                 className={`flex flex-col items-center gap-1.5 p-2.5 rounded-2xl transition-all duration-200 ${
-                  selectedCategory === cat.slug
-                    ? "bg-blue-500 text-white shadow-md"
-                    : "hover:bg-gray-50"
+                  selectedCategory === cat.slug ? "bg-blue-500 text-white shadow-md" : "hover:bg-gray-50"
                 }`}
               >
                 <span className="text-2xl">{cat.icon}</span>
@@ -210,9 +267,7 @@ export default function HirePage() {
               key={sort.key}
               onClick={() => setFilters(f => ({ ...f, sortBy: sort.key }))}
               className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                filters.sortBy === sort.key
-                  ? "bg-blue-500 text-white"
-                  : "bg-white text-gray-600 border border-gray-200"
+                filters.sortBy === sort.key ? "bg-blue-500 text-white" : "bg-white text-gray-600 border border-gray-200"
               }`}
             >
               {sort.label}
@@ -228,9 +283,7 @@ export default function HirePage() {
               <span className="text-xs text-blue-600 font-medium">Within {filters.radius}km</span>
             </div>
             <div className="space-y-3">
-              {topProviders.map((p, i) => (
-                <ProviderCard key={p.id} provider={p} featured={i === 0} />
-              ))}
+              {topProviders.map((p, i) => <ProviderCard key={p.id} provider={p} featured={i === 0} />)}
             </div>
           </div>
         )}
@@ -304,87 +357,52 @@ export default function HirePage() {
             </div>
 
             <div className="space-y-5 max-h-96 overflow-y-auto">
-              {/* Radius */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">
                   Search Radius: <span className="text-blue-600">{filters.radius}km</span>
                 </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  value={filters.radius}
+                <input type="range" min="1" max="20" value={filters.radius}
                   onChange={e => setFilters(f => ({ ...f, radius: Number(e.target.value) }))}
-                  className="w-full accent-blue-500"
-                />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>1km</span>
-                  <span>20km</span>
-                </div>
+                  className="w-full accent-blue-500" />
+                <div className="flex justify-between text-xs text-gray-400 mt-1"><span>1km</span><span>20km</span></div>
               </div>
 
-              {/* Min Rating */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">
                   Minimum Rating: <span className="text-blue-600">{filters.minRating > 0 ? `${filters.minRating}⭐` : "Any"}</span>
                 </label>
                 <div className="flex gap-2">
                   {[0, 3, 3.5, 4, 4.5].map(r => (
-                    <button
-                      key={r}
-                      onClick={() => setFilters(f => ({ ...f, minRating: r }))}
-                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${filters.minRating === r ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600"}`}
-                    >
+                    <button key={r} onClick={() => setFilters(f => ({ ...f, minRating: r }))}
+                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${filters.minRating === r ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600"}`}>
                       {r === 0 ? "Any" : `${r}+`}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Max Price */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">
                   Max Price: <span className="text-blue-600">₹{filters.maxPrice >= 10000 ? "Any" : filters.maxPrice}</span>
                 </label>
-                <input
-                  type="range"
-                  min="100"
-                  max="10000"
-                  step="100"
-                  value={filters.maxPrice}
+                <input type="range" min="100" max="10000" step="100" value={filters.maxPrice}
                   onChange={e => setFilters(f => ({ ...f, maxPrice: Number(e.target.value) }))}
-                  className="w-full accent-blue-500"
-                />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>₹100</span>
-                  <span>Any</span>
-                </div>
+                  className="w-full accent-blue-500" />
+                <div className="flex justify-between text-xs text-gray-400 mt-1"><span>₹100</span><span>Any</span></div>
               </div>
 
-              {/* Toggles */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <div>
-                    <p className="font-semibold text-sm">Available Now</p>
-                    <p className="text-xs text-gray-500">Show only available providers</p>
-                  </div>
-                  <button
-                    onClick={() => setFilters(f => ({ ...f, availableOnly: !f.availableOnly }))}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${filters.availableOnly ? "bg-blue-500" : "bg-gray-300"}`}
-                  >
+                  <div><p className="font-semibold text-sm">Available Now</p><p className="text-xs text-gray-500">Show only available providers</p></div>
+                  <button onClick={() => setFilters(f => ({ ...f, availableOnly: !f.availableOnly }))}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${filters.availableOnly ? "bg-blue-500" : "bg-gray-300"}`}>
                     <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${filters.availableOnly ? "translate-x-6" : ""}`} />
                   </button>
                 </div>
-
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <div>
-                    <p className="font-semibold text-sm">✓ Verified Only</p>
-                    <p className="text-xs text-gray-500">Show only verified providers</p>
-                  </div>
-                  <button
-                    onClick={() => setFilters(f => ({ ...f, verifiedOnly: !f.verifiedOnly }))}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${filters.verifiedOnly ? "bg-blue-500" : "bg-gray-300"}`}
-                  >
+                  <div><p className="font-semibold text-sm">✓ Verified Only</p><p className="text-xs text-gray-500">Show only verified providers</p></div>
+                  <button onClick={() => setFilters(f => ({ ...f, verifiedOnly: !f.verifiedOnly }))}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${filters.verifiedOnly ? "bg-blue-500" : "bg-gray-300"}`}>
                     <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${filters.verifiedOnly ? "translate-x-6" : ""}`} />
                   </button>
                 </div>
@@ -392,20 +410,10 @@ export default function HirePage() {
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => {
-                  setFilters({ minRating: 0, maxPrice: 10000, availableOnly: false, verifiedOnly: false, radius: 5, sortBy: "distance" });
-                }}
-                className="btn-secondary flex-1"
-              >
-                Reset
-              </button>
-              <button
-                onClick={() => { setShowFilters(false); fetchProviders(); }}
-                className="btn-primary flex-1"
-              >
-                Apply Filters
-              </button>
+              <button onClick={() => setFilters({ minRating: 0, maxPrice: 10000, availableOnly: false, verifiedOnly: false, radius: 5, sortBy: "distance" })}
+                className="btn-secondary flex-1">Reset</button>
+              <button onClick={() => { setShowFilters(false); fetchProviders(); }}
+                className="btn-primary flex-1">Apply Filters</button>
             </div>
           </div>
         </div>
