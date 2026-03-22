@@ -144,19 +144,22 @@ export async function POST(req: NextRequest) {
 }
 
 // Notify provider
-await createNotification({
-  userId: provider.userId,
-  title: "New Booking Request! 🔔",
-  message: `${booking.customer.name || "A customer"} needs your ${provider.category.name} service`,
-  type: "booking",
-  link: "/bookings",
-});
+  await createNotification({
+    userId: provider.userId,
+    title: "New Booking Request! 🔔",
+    message: `${booking.customer.name || "A customer"} needs your ${provider.category.name} service`,
+    type: "booking",
+    link: "/bookings",
+  });
 
-// Notify customer
-await createNotification({
-  userId: user.id,
-  title: "Booking Sent! ✅",
-  message: `Your request has been sent to ${provider.businessName}`,
-  type: "success",
-  link: "/bookings",
-});
+  // Notify customer
+  await createNotification({
+    userId: user.id,
+    title: "Booking Sent! ✅",
+    message: `Your request has been sent to ${provider.businessName}`,
+    type: "success",
+    link: "/bookings",
+  });
+
+  return NextResponse.json({ booking }, { status: 201 });
+}
