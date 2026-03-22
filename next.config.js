@@ -18,5 +18,6 @@ const nextConfig = {
       "nodemailer",
     ],
   },
+  headers: async () => [],
 };
 module.exports = nextConfig;
