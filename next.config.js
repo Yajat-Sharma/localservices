@@ -7,16 +7,16 @@ const nextConfig = {
       "firebasestorage.googleapis.com",
     ],
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  output: "standalone",
-  staticPageGenerationTimeout: 120,
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
+  staticPageGenerationTimeout: 300,
   experimental: {
-    serverComponentsExternalPackages: ["@prisma/client", "prisma", "bcryptjs", "nodemailer"],
+    serverComponentsExternalPackages: [
+      "@prisma/client",
+      "prisma",
+      "bcryptjs",
+      "nodemailer",
+    ],
   },
 };
 module.exports = nextConfig;
