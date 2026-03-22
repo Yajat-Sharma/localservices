@@ -26,7 +26,7 @@ export default function HomePage() {
           <div className="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-sm">LS</div>
           <span className="font-bold text-gray-900">{t("app_name")}</span>
         </div>
-        <LanguageSwitcher />
+        <LanguageSwitcher compact/>
       </header>
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center">
         <div className="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center mb-8">

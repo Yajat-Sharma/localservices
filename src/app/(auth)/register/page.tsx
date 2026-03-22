@@ -154,7 +154,7 @@ function RegisterPage() {
           <div className="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-sm">LS</div>
           <span className="font-bold">LocalServices</span>
         </Link>
-        <LanguageSwitcher />
+        <LanguageSwitcher compact />
       </header>
       <main className="flex-1 flex flex-col justify-center px-6 pb-8 max-w-sm mx-auto w-full animate-slide-up">
                 {step === "phone" && (
