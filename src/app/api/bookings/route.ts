@@ -17,13 +17,9 @@ async function sendEmail(to: string, subject: string, html: string) {
   try {
     await transporter.sendMail({
       from: `"LocalServices" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html,
+      to, subject, html,
     });
-  } catch (err) {
-    console.error("Email error:", err);
-  }
+  } catch (err) { console.error("Email error:", err); }
 }
 
 export async function GET(req: NextRequest) {
@@ -86,28 +82,12 @@ export async function POST(req: NextRequest) {
     await sendEmail(
       provider.user.email,
       `🔔 New Booking Request - ${provider.category.name}`,
-      `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #0c8ee8, #0059a0); padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">New Booking Request! 🎉</h1>
-            <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0;">Someone needs your ${provider.category.name} service</p>
-          </div>
-          <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
-            <h3 style="color: #1e293b; margin: 0 0 16px;">Booking Details</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Customer</td><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">${booking.customer.name || "Customer"}</td></tr>
-              <tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Phone</td><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">${booking.customer.phone || "N/A"}</td></tr>
-              <tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Problem</td><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">${problem}</td></tr>
-              ${address ? `<tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Address</td><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">${address}</td></tr>` : ""}
-              <tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Time</td><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">${new Date().toLocaleString("en-IN")}</td></tr>
-            </table>
-          </div>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/bookings" style="display: block; background: #0c8ee8; color: white; padding: 14px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; text-align: center; margin-bottom: 16px;">
-            View & Accept Booking →
-          </a>
-          <p style="color: #94a3b8; font-size: 12px; text-align: center;">LocalServices • Connecting local communities</p>
-        </div>
-      `
+      `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #0c8ee8;">New Booking Request! 🎉</h1>
+        <p>Customer: ${booking.customer.name || "Customer"}</p>
+        <p>Problem: ${problem}</p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/bookings" style="background: #0c8ee8; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">View Booking →</a>
+      </div>`
     );
   }
 
@@ -115,35 +95,17 @@ export async function POST(req: NextRequest) {
   if (user.email) {
     await sendEmail(
       user.email,
-      `✅ Booking Confirmed - ${provider.category.name}`,
-      `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">Booking Sent! ✅</h1>
-            <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0;">Your request has been sent to ${provider.businessName}</p>
-          </div>
-          <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
-            <h3 style="color: #1e293b; margin: 0 0 16px;">Your Booking</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Service</td><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">${provider.category.name}</td></tr>
-              <tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Provider</td><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">${provider.businessName}</td></tr>
-              <tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Problem</td><td style="padding: 8px 0; font-weight: bold; color: #1e293b;">${problem}</td></tr>
-              <tr><td style="padding: 8px 0; color: #64748b; font-size: 14px;">Status</td><td style="padding: 8px 0;"><span style="background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold;">Pending</span></td></tr>
-            </table>
-          </div>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/bookings" style="display: block; background: #10b981; color: white; padding: 14px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; text-align: center;">
-            Track Your Booking →
-          </a>
-          <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 16px;">LocalServices • Connecting local communities</p>
-        </div>
-      `
+      `✅ Booking Sent - ${provider.category.name}`,
+      `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #10b981;">Booking Sent! ✅</h1>
+        <p>Provider: ${provider.businessName}</p>
+        <p>Problem: ${problem}</p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/bookings" style="background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Track Booking →</a>
+      </div>`
     );
   }
 
-  return NextResponse.json({ booking }, { status: 201 });
-}
-
-// Notify provider
+  // Notify provider
   await createNotification({
     userId: provider.userId,
     title: "New Booking Request! 🔔",
