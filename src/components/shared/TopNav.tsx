@@ -10,7 +10,7 @@ export function TopNav({ title, showSearch, onSearch, searchValue = "", showBack
   return (
     <>
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <header className="sticky top-0 z-30 glass-nav">
         <div className="flex items-center gap-3 px-4 h-16">
           {showBack ? (
             <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-gray-100 transition-colors text-gray-600">←</button>

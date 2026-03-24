@@ -19,7 +19,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <>
       {isOpen && <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={onClose} />}
-      <div className={`fixed top-0 left-0 h-full w-72 bg-white z-50 shadow-2xl transition-transform duration-300 flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <div className={`fixed top-0 left-0 h-full w-72 z-50 transition-transform duration-300 flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+          style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "4px 0 40px rgba(0,0,0,0.12)", borderRight: "1px solid rgba(255,255,255,0.5)" }}>
         <div className="bg-blue-600 px-6 pt-12 pb-8">
           <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-white/70 hover:text-white rounded-full">✕</button>
           <div className="flex items-center gap-3">

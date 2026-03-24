@@ -4,11 +4,14 @@ import { TopNav } from "@/components/shared/TopNav";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useTheme } from "@/lib/theme";
 
 export default function SettingsPage() {
   const { t } = useLanguage();
   const { logout } = useAuthStore();
   const router = useRouter();
+  const { isDark } = useTheme();
   return (
     <div className="min-h-screen bg-gray-50">
       <TopNav showBack onBack={() => router.back()} title={t("settings")} />
@@ -20,3 +23,13 @@ export default function SettingsPage() {
     </div>
   );
 }
+<div className="card p-4">
+  <h3 className="font-bold text-gray-900 dark:text-white mb-4">Appearance</h3>
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">Theme</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Light, dark or system default</p>
+    </div>
+    <ThemeToggle />
+  </div>
+</div>

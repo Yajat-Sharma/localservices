@@ -20,7 +20,7 @@ export default function HomePage() {
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
   if (user) return null;
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #fafafe 50%, #f5f0ff 100%)" }}>
       <header className="flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-sm">LS</div>
