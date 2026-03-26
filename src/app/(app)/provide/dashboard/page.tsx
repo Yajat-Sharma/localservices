@@ -111,6 +111,14 @@ export default function ProviderDashboard() {
               <span className="text-2xl block mb-2">📋</span>
               <p className="font-semibold text-sm">All Bookings</p>
             </button>
+            <button onClick={() => router.push("/provide/portfolio")} className="card p-4 text-left hover:shadow-md transition-shadow">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" className="mb-2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <p className="font-semibold text-sm">Portfolio</p>
+            </button>
           </div>
       </div>
     </div>
