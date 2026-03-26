@@ -6,6 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useTheme } from "@/lib/theme";
+import { PushNotificationToggle } from "@/components/ui/PushNotificationToggle";
 
 export default function SettingsPage() {
   const { t } = useLanguage();
@@ -29,7 +30,11 @@ export default function SettingsPage() {
             <ThemeToggle />
           </div>
         </div>
-
+        {/* Notifications */}
+        <div className="card p-4">
+          <h3 className="font-bold text-gray-900 dark:text-white mb-3">Notifications</h3>
+          <PushNotificationToggle />
+        </div>
         {/* Language */}
         <div className="card p-4">
           <h3 className="font-bold text-gray-900 dark:text-white mb-4">Language</h3>
