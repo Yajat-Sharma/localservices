@@ -473,7 +473,7 @@ export default function ProviderProfilePage() {
               {/* Scheduling */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                  Schedule (Optional)
+                  Date of Appointment
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -486,6 +486,9 @@ export default function ProviderProfilePage() {
                     />
                   </div>
                   <div>
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                  Time of Appointment
+                    </label>
                     <select
                       value={scheduledTime}
                       onChange={e => setScheduledTime(e.target.value)}
