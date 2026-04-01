@@ -27,6 +27,7 @@
     "sharp": "^0.34.5",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
+    "twilio": "^5.13.1",
     "web-push": "^3.6.7",
     "zustand": "^5.0.11"
   },
@@ -36,6 +37,7 @@
     "@types/nodemailer": "^7.0.11",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/twilio": "^3.19.2",
     "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
