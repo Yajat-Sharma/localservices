@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import nodemailer from "nodemailer";
 import { createNotification } from "@/lib/notifications";
+import { sendSMS, SMS_TEMPLATES } from "@/lib/sms";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -122,6 +123,26 @@ export async function POST(req: NextRequest) {
     type: "success",
     link: "/bookings",
   });
+
+  // Send SMS to provider
+if (provider.user.phone) {
+  await sendSMS(
+    provider.user.phone,
+    SMS_TEMPLATES.newBooking(
+      booking.customer.name || "A customer",
+      provider.category.name
+    )
+  );
+}
+
+// Send SMS to customer
+if (user.phone) {
+  await sendSMS(
+    user.phone,
+    SMS_TEMPLATES.bookingAccepted(provider.businessName, provider.category.name)
+      .replace("accepted", "received")
+  );
+}
 
   return NextResponse.json({ booking }, { status: 201 });
 }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import nodemailer from "nodemailer";
 import { createNotification } from "@/lib/notifications";
+import { sendSMS, SMS_TEMPLATES } from "@/lib/sms";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -57,6 +58,47 @@ if (status === "ACCEPTED") {
     type: "success",
     link: "/bookings",
   });
+}
+
+const customerPhone = booking.customer.phone;
+const providerPhone = booking.provider.user.phone;
+const categoryName = booking.provider.category.name;
+const providerName = booking.provider.businessName;
+
+if (status === "ACCEPTED" && customerPhone) {
+  await sendSMS(
+    customerPhone,
+    SMS_TEMPLATES.bookingAccepted(providerName, categoryName)
+  );
+}
+
+if (status === "IN_PROGRESS" && customerPhone) {
+  await sendSMS(
+    customerPhone,
+    SMS_TEMPLATES.bookingStarted(providerName)
+  );
+}
+
+if (status === "COMPLETED") {
+  if (customerPhone) {
+    await sendSMS(
+      customerPhone,
+      SMS_TEMPLATES.bookingCompleted(providerName, categoryName)
+    );
+  }
+  if (providerPhone) {
+    await sendSMS(
+      providerPhone,
+      `✅ LocalServices: Job completed! Great work. Check your earnings in the app.`
+    );
+  }
+}
+
+if (status === "CANCELLED" && customerPhone) {
+  await sendSMS(
+    customerPhone,
+    SMS_TEMPLATES.bookingCancelled(categoryName)
+  );
 }
 
 if (status === "COMPLETED") {

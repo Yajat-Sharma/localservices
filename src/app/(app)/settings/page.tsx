@@ -35,6 +35,27 @@ export default function SettingsPage() {
           <h3 className="font-bold text-gray-900 dark:text-white mb-3">Notifications</h3>
           <PushNotificationToggle />
         </div>
+        {/* SMS Notifications */}
+        <div className="card p-4">
+          <h3 className="font-bold text-gray-900 dark:text-white mb-3">Notifications</h3>
+          <div className="space-y-3">
+            <PushNotificationToggle />
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-2xl">
+              <div>
+                <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">SMS Notifications</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Get SMS alerts for booking updates
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span className="text-xs font-semibold">Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
         {/* Language */}
         <div className="card p-4">
           <h3 className="font-bold text-gray-900 dark:text-white mb-4">Language</h3>
