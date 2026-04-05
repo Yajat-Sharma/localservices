@@ -14,12 +14,9 @@ export default function LoginPage() {
   const router = useRouter();
   const { setUser, setToken } = useAuthStore();
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
-
-  // Email login state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Phone login state
+  const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState(["","","","","",""]);
@@ -38,8 +35,7 @@ export default function LoginPage() {
   const saveSession = (token: string, user: any) => {
     localStorage.setItem("auth_token", token);
     document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}`;
-    setToken(token);
-    setUser(user);
+    setToken(token); setUser(user);
     if (user.role === "ADMIN") router.replace("/admin");
     else if (!user.name) router.replace("/register?step=name");
     else if (user.role === "PROVIDER") router.replace("/provide/dashboard");
@@ -60,34 +56,23 @@ export default function LoginPage() {
 
   const clearRecaptcha = () => {
     try {
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.clear();
-        (window as any).recaptchaVerifier = null;
-      }
+      if ((window as any).recaptchaVerifier) { (window as any).recaptchaVerifier.clear(); (window as any).recaptchaVerifier = null; }
     } catch {}
     if (recaptchaRef.current) recaptchaRef.current.innerHTML = "";
   };
 
   const handleSendOtp = async () => {
     if (!phone || phone.length < 10) { toast.error("Enter valid phone number"); return; }
-    setLoading(true);
-    clearRecaptcha();
+    setLoading(true); clearRecaptcha();
     try {
-      const verifier = new RecaptchaVerifier(auth, recaptchaRef.current!, {
-        size: "invisible",
-        callback: () => {},
-        "expired-callback": () => { clearRecaptcha(); },
-      });
+      const verifier = new RecaptchaVerifier(auth, recaptchaRef.current!, { size: "invisible", callback: () => {}, "expired-callback": () => { clearRecaptcha(); } });
       (window as any).recaptchaVerifier = verifier;
       await verifier.render();
       const result = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
-      setConfirmationResult(result);
-      setStep("otp");
-      setCountdown(60);
+      setConfirmationResult(result); setStep("otp"); setCountdown(60);
       toast.success(t("otp_sent"));
     } catch (err: any) {
-      toast.error(err.message || "Failed to send OTP");
-      clearRecaptcha();
+      toast.error(err.message || "Failed to send OTP"); clearRecaptcha();
     } finally { setLoading(false); }
   };
 
@@ -100,127 +85,154 @@ export default function LoginPage() {
       const firebaseToken = await result.user.getIdToken();
       const res = await axios.post("/api/auth/login", { firebaseToken, phone: result.user.phoneNumber });
       saveSession(res.data.token, res.data.user);
-    } catch {
-      toast.error(t("invalid_otp"));
-    } finally { setLoading(false); }
+    } catch { toast.error(t("invalid_otp")); }
+    finally { setLoading(false); }
   };
 
   const handleOtpChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
     const newOtp = [...otp]; newOtp[index] = value.slice(-1); setOtp(newOtp);
-    if (value && index < 5) document.getElementById(`login-otp-${index+1}`)?.focus();
+    if (value && index < 5) document.getElementById(`otp-${index+1}`)?.focus();
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, #faf5ff 0%, #fdf2f8 50%, #faf5ff 100%)" }}>
       <div ref={recaptchaRef} />
+
       <header className="flex items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-sm">LS</div>
-          <span className="font-bold">LocalServices</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-2xl flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            </svg>
+          </div>
+          <span className="font-bold text-lg" style={{ color: "#0f0a1e" }}>LocalServices</span>
         </Link>
         <LanguageSwitcher compact />
       </header>
 
-      <main className="flex-1 flex flex-col justify-center px-6 pb-8 max-w-sm mx-auto w-full">
+      <main className="flex-1 flex flex-col justify-center px-6 pb-10 max-w-sm mx-auto w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl">🔐</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("login")}</h1>
-          <p className="text-gray-500 text-sm">Welcome back to LocalServices</p>
+          <h1 className="text-3xl font-black tracking-tight mb-2" style={{ color: "#0f0a1e" }}>
+            Welcome back
+          </h1>
+          <p className="gradient-text font-bold text-lg">Sign in to continue</p>
         </div>
 
-        {/* Login method tabs */}
-        <div className="flex bg-gray-100 rounded-2xl p-1 mb-6">
-          <button
-            onClick={() => setLoginMethod("email")}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${loginMethod === "email" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
-          >
-            📧 Email
-          </button>
-          <button
-            onClick={() => setLoginMethod("phone")}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${loginMethod === "phone" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}
-          >
-            📱 Phone OTP
-          </button>
+        {/* Method tabs */}
+        <div className="flex p-1 rounded-2xl mb-6"
+          style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.1)" }}>
+          {[
+            { key: "email", label: "Email" },
+            { key: "phone", label: "Phone OTP" },
+          ].map(m => (
+            <button
+              key={m.key}
+              onClick={() => setLoginMethod(m.key as any)}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+              style={loginMethod === m.key ? {
+                background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+                color: "white",
+                boxShadow: "0 4px 12px rgba(124,58,237,0.3)",
+              } : { color: "#6b7280" }}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
 
         {/* Email Login */}
         {loginMethod === "email" && (
-          <div className="animate-slide-up space-y-4">
+          <div className="space-y-4 animate-fade-in">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="input-field"
-                onKeyDown={(e) => e.key === "Enter" && handleEmailLogin()}
-              />
+              <label className="block text-sm font-semibold mb-2" style={{ color: "#374151" }}>Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com" className="input-field"
+                onKeyDown={e => e.key === "Enter" && handleEmailLogin()} />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="input-field"
-                onKeyDown={(e) => e.key === "Enter" && handleEmailLogin()}
-              />
-              {/* Forgot Password Link */}
-              <div className="text-right mt-1">
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-blue-600 font-medium hover:text-blue-700 transition-colors"
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold" style={{ color: "#374151" }}>Password</label>
+                <Link href="/forgot-password" className="text-xs font-semibold gradient-text">Forgot password?</Link>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••" className="input-field pr-12"
+                  onKeyDown={e => e.key === "Enter" && handleEmailLogin()}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                  style={{ color: "#9ca3af" }}
                 >
-                  Forgot password?
-                </Link>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    {showPassword
+                      ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></>
+                      : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
+                    }
+                  </svg>
+                </button>
               </div>
             </div>
-            <button
-              onClick={handleEmailLogin}
-              disabled={loading}
-              className="btn-primary w-full"
-            >
-              {loading ? "Logging in..." : t("login")}
+            <button onClick={handleEmailLogin} disabled={loading} className="btn-primary w-full py-4 text-base">
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Signing in...
+                </span>
+              ) : "Sign In"}
             </button>
           </div>
         )}
 
-        {/* Phone OTP Login */}
+        {/* Phone OTP */}
         {loginMethod === "phone" && (
-          <div className="animate-slide-up">
+          <div className="animate-fade-in">
             {step === "phone" ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">{t("phone_number")}</label>
+                  <label className="block text-sm font-semibold mb-2" style={{ color: "#374151" }}>{t("phone_number")}</label>
                   <div className="flex gap-2">
-                    <div className="flex items-center px-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium">🇮🇳 +91</div>
-                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g,""))} placeholder="9876543210" maxLength={10} className="input-field flex-1" />
+                    <div className="flex items-center px-4 rounded-2xl text-sm font-bold flex-shrink-0"
+                      style={{ background: "white", border: "1.5px solid rgba(124,58,237,0.1)", color: "#374151" }}>
+                      🇮🇳 +91
+                    </div>
+                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,""))}
+                      placeholder="9876543210" maxLength={10} className="input-field flex-1" />
                   </div>
                 </div>
-                <button onClick={handleSendOtp} disabled={loading || phone.length < 10} className="btn-primary w-full">
+                <button onClick={handleSendOtp} disabled={loading || phone.length < 10} className="btn-primary w-full py-4">
                   {loading ? "Sending..." : t("send_otp")}
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                <p className="text-gray-500 text-sm text-center">OTP sent to +91 {phone}</p>
+              <div className="space-y-5">
+                <p className="text-center text-sm" style={{ color: "#6b7280" }}>
+                  OTP sent to <span className="font-bold" style={{ color: "#0f0a1e" }}>+91 {phone}</span>
+                </p>
                 <div className="flex gap-2 justify-center">
                   {otp.map((digit, i) => (
-                    <input key={i} id={`login-otp-${i}`} type="text" inputMode="numeric" maxLength={1} value={digit}
-                      onChange={(e) => handleOtpChange(i, e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Backspace" && !otp[i] && i > 0) document.getElementById(`login-otp-${i-1}`)?.focus(); }}
-                      className={`w-12 h-14 text-center text-xl font-bold border-2 rounded-2xl focus:outline-none transition-all ${digit ? "border-blue-400 bg-blue-50" : "border-gray-200 bg-gray-50"}`}
+                    <input key={i} id={`otp-${i}`} type="text" inputMode="numeric" maxLength={1} value={digit}
+                      onChange={e => handleOtpChange(i, e.target.value)}
+                      onKeyDown={e => { if (e.key === "Backspace" && !otp[i] && i > 0) document.getElementById(`otp-${i-1}`)?.focus(); }}
+                      className="w-12 h-14 text-center text-xl font-black rounded-2xl focus:outline-none transition-all"
+                      style={{
+                        border: digit ? "2px solid #7c3aed" : "2px solid rgba(124,58,237,0.15)",
+                        background: digit ? "rgba(124,58,237,0.06)" : "white",
+                        color: "#0f0a1e",
+                        boxShadow: digit ? "0 0 0 3px rgba(124,58,237,0.1)" : "none",
+                      }}
                     />
                   ))}
                 </div>
-                <button onClick={handleVerifyOtp} disabled={loading || otp.join("").length < 6} className="btn-primary w-full">
+                <button onClick={handleVerifyOtp} disabled={loading || otp.join("").length < 6} className="btn-primary w-full py-4">
                   {loading ? "Verifying..." : t("verify_otp")}
                 </button>
-                <button onClick={handleSendOtp} disabled={countdown > 0} className="w-full text-sm text-gray-500 py-2">
+                <button onClick={handleSendOtp} disabled={countdown > 0} className="w-full text-sm py-2 font-medium" style={{ color: countdown > 0 ? "#9ca3af" : "#7c3aed" }}>
                   {countdown > 0 ? `Resend in ${countdown}s` : t("resend_otp")}
                 </button>
               </div>
@@ -228,9 +240,9 @@ export default function LoginPage() {
           </div>
         )}
 
-        <p className="text-center mt-6 text-sm text-gray-500">
+        <p className="text-center mt-6 text-sm" style={{ color: "#6b7280" }}>
           Don't have an account?{" "}
-          <Link href="/register" className="text-blue-600 font-semibold">{t("signup")}</Link>
+          <Link href="/register" className="font-bold gradient-text">{t("signup")}</Link>
         </p>
       </main>
     </div>

@@ -13,15 +13,16 @@ module.exports = {
         display: ["DM Serif Display", "system-ui", "serif"],
       },
       colors: {
-        brand: {
-          50: "#f0f7ff", 100: "#e0effe", 200: "#bae0fd", 300: "#7cc8fc",
-          400: "#36aaf7", 500: "#0c8ee8", 600: "#006fc6", 700: "#0059a0",
-          800: "#064c84", 900: "#0b406e", 950: "#072949",
-        },
-        surface: {
-          DEFAULT: "#ffffff", 50: "#fafafa", 100: "#f5f5f5",
-          200: "#e5e5e5", 300: "#d4d4d4",
-        },
+            brand: {
+              50: "#faf5ff", 100: "#f3e8ff", 200: "#e9d5ff", 300: "#d8b4fe",
+              400: "#c084fc", 500: "#a855f7", 600: "#9333ea", 700: "#7c3aed",
+              800: "#6d28d9", 900: "#5b21b6", 950: "#3b0764",
+            },
+            accent: {
+              50: "#fdf2f8", 100: "#fce7f3", 200: "#fbcfe8", 300: "#f9a8d4",
+              400: "#f472b6", 500: "#ec4899", 600: "#db2777", 700: "#be185d",
+            },
+          },
         dark: {
           bg: "#0a0f1e",
           surface: "#0f1629",
