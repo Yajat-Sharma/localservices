@@ -13,16 +13,29 @@ module.exports = {
         display: ["DM Serif Display", "system-ui", "serif"],
       },
       colors: {
-            brand: {
-              50: "#faf5ff", 100: "#f3e8ff", 200: "#e9d5ff", 300: "#d8b4fe",
-              400: "#c084fc", 500: "#a855f7", 600: "#9333ea", 700: "#7c3aed",
-              800: "#6d28d9", 900: "#5b21b6", 950: "#3b0764",
-            },
-            accent: {
-              50: "#fdf2f8", 100: "#fce7f3", 200: "#fbcfe8", 300: "#f9a8d4",
-              400: "#f472b6", 500: "#ec4899", 600: "#db2777", 700: "#be185d",
-            },
-          },
+        brand: {
+          50: "#faf5ff",
+          100: "#f3e8ff",
+          200: "#e9d5ff",
+          300: "#d8b4fe",
+          400: "#c084fc",
+          500: "#a855f7",
+          600: "#9333ea",
+          700: "#7c3aed",
+          800: "#6d28d9",
+          900: "#5b21b6",
+          950: "#3b0764",
+        },
+        accent: {
+          50: "#fdf2f8",
+          100: "#fce7f3",
+          200: "#fbcfe8",
+          300: "#f9a8d4",
+          400: "#f472b6",
+          500: "#ec4899",
+          600: "#db2777",
+          700: "#be185d",
+        },
         dark: {
           bg: "#0a0f1e",
           surface: "#0f1629",
@@ -92,10 +105,14 @@ module.exports = {
         "gradient-brand": "linear-gradient(135deg, #2563eb, #4f46e5)",
         "gradient-brand-soft": "linear-gradient(135deg, #eff6ff, #eef2ff)",
         "gradient-dark": "linear-gradient(135deg, #0a0f1e 0%, #0f1629 100%)",
-        "gradient-mesh": "radial-gradient(at 20% 0%, rgba(37,99,235,0.06) 0px, transparent 50%), radial-gradient(at 80% 100%, rgba(99,102,241,0.05) 0px, transparent 50%)",
-        "gradient-mesh-dark": "radial-gradient(at 20% 0%, rgba(37,99,235,0.15) 0px, transparent 50%), radial-gradient(at 80% 100%, rgba(99,102,241,0.1) 0px, transparent 50%)",
-        "glass-card": "linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.4))",
-        "glass-card-dark": "linear-gradient(135deg, rgba(15,23,42,0.8), rgba(15,23,42,0.6))",
+        "gradient-mesh":
+          "radial-gradient(at 20% 0%, rgba(37,99,235,0.06) 0px, transparent 50%), radial-gradient(at 80% 100%, rgba(99,102,241,0.05) 0px, transparent 50%)",
+        "gradient-mesh-dark":
+          "radial-gradient(at 20% 0%, rgba(37,99,235,0.15) 0px, transparent 50%), radial-gradient(at 80% 100%, rgba(99,102,241,0.1) 0px, transparent 50%)",
+        "glass-card":
+          "linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.4))",
+        "glass-card-dark":
+          "linear-gradient(135deg, rgba(15,23,42,0.8), rgba(15,23,42,0.6))",
       },
       spacing: {
         "safe-bottom": "env(safe-area-inset-bottom)",
