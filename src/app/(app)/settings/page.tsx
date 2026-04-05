@@ -10,7 +10,7 @@ import { PushNotificationToggle } from "@/components/ui/PushNotificationToggle";
 
 export default function SettingsPage() {
   const { t } = useLanguage();
-  const { logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const router = useRouter();
   const { isDark } = useTheme();
 
@@ -30,21 +30,17 @@ export default function SettingsPage() {
             <ThemeToggle />
           </div>
         </div>
+
         {/* Notifications */}
-        <div className="card p-4">
-          <h3 className="font-bold text-gray-900 dark:text-white mb-3">Notifications</h3>
-          <PushNotificationToggle />
-        </div>
-        {/* SMS Notifications */}
         <div className="card p-4">
           <h3 className="font-bold text-gray-900 dark:text-white mb-3">Notifications</h3>
           <div className="space-y-3">
             <PushNotificationToggle />
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-2xl">
               <div>
-                <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">SMS Notifications</p>
+                <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">WhatsApp Notifications</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Get SMS alerts for booking updates
+                  Get WhatsApp alerts for booking updates
                 </p>
               </div>
               <div className="flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full">
@@ -56,6 +52,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
         {/* Language */}
         <div className="card p-4">
           <h3 className="font-bold text-gray-900 dark:text-white mb-4">Language</h3>
@@ -72,6 +69,8 @@ export default function SettingsPage() {
         <div className="card p-4">
           <h3 className="font-bold text-gray-900 dark:text-white mb-3">Account</h3>
           <div className="space-y-1">
+
+            {/* Edit Profile */}
             <button
               onClick={() => router.push("/profile")}
               className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
@@ -85,34 +84,37 @@ export default function SettingsPage() {
                 </div>
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Edit Profile</span>
               </div>
-              <button
-                onClick={() => router.push("/switch-account")}
-                className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round">
-                      <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 block">Switch Account</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {user?.role === "CUSTOMER" ? "Become a provider" :
-                      user?.role === "PROVIDER" ? "Switch to customer" :
-                      "Switch between accounts"}
-                    </span>
-                  </div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </button>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
 
+            {/* Switch Account */}
+            <button
+              onClick={() => router.push("/switch-account")}
+              className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round">
+                    <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 block">Switch Account</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {user?.role === "CUSTOMER" ? "Become a provider" :
+                     user?.role === "PROVIDER" ? "Switch to customer" :
+                     "Switch between accounts"}
+                  </span>
+                </div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+
+            {/* Change Password */}
             <button
               onClick={() => router.push("/forgot-password")}
               className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
@@ -131,6 +133,7 @@ export default function SettingsPage() {
               </svg>
             </button>
 
+            {/* My Bookings */}
             <button
               onClick={() => router.push("/bookings")}
               className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
@@ -142,7 +145,6 @@ export default function SettingsPage() {
                     <polyline points="14 2 14 8 20 8"/>
                     <line x1="16" y1="13" x2="8" y2="13"/>
                     <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10 9 9 9 8 9"/>
                   </svg>
                 </div>
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">My Bookings</span>
