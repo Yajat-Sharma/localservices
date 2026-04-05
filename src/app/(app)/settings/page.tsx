@@ -85,6 +85,29 @@ export default function SettingsPage() {
                 </div>
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Edit Profile</span>
               </div>
+              <button
+                onClick={() => router.push("/switch-account")}
+                className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round">
+                      <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 block">Switch Account</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {user?.role === "CUSTOMER" ? "Become a provider" :
+                      user?.role === "PROVIDER" ? "Switch to customer" :
+                      "Switch between accounts"}
+                    </span>
+                  </div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
