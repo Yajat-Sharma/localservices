@@ -227,28 +227,81 @@ export default function HirePage() {
       )}
 
       {/* Hero Banner */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-5 pb-8">
-        <h2 className="text-white font-bold text-xl">
-          Hello, {user?.name?.split(" ")[0] || "there"} 👋
-        </h2>
-        <p className="text-blue-200 text-sm mt-0.5">What service do you need today?</p>
+<div className="relative px-4 pt-6 pb-10 overflow-hidden"
+  style={{ background: "linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #be185d 100%)" }}>
+  {/* Pattern */}
+  <div className="absolute inset-0 opacity-10"
+    style={{ backgroundImage: "radial-gradient(white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+  {/* Blobs */}
+  <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full opacity-20 blur-3xl"
+    style={{ background: "white" }} />
+  <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full opacity-15 blur-2xl"
+    style={{ background: "#f472b6" }} />
 
-        {activeFiltersCount > 0 && (
-          <div className="flex items-center gap-2 mt-3 overflow-x-auto scrollbar-hide">
-            {filters.availableOnly && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">✓ Available</span>}
-            {filters.verifiedOnly && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">✓ Verified</span>}
-            {filters.minRating > 0 && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">⭐ {filters.minRating}+</span>}
-            {filters.maxPrice < 10000 && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">₹ Max {filters.maxPrice}</span>}
-            {filters.radius !== 5 && <span className="flex-shrink-0 bg-white/20 text-white text-xs px-3 py-1 rounded-full">📍 {filters.radius}km</span>}
-            <button
-              onClick={() => setFilters({ minRating: 0, maxPrice: 10000, availableOnly: false, verifiedOnly: false, radius: 5, sortBy: "distance" })}
-              className="flex-shrink-0 bg-red-400/80 text-white text-xs px-3 py-1 rounded-full"
-            >
-              Clear all
-            </button>
-          </div>
+  <div className="relative">
+    <p className="text-purple-200 text-sm font-medium mb-1">Hello 👋</p>
+    <h2 className="text-white font-black text-2xl leading-tight tracking-tight mb-4">
+      {user?.name?.split(" ")[0] || "there"},<br />
+      <span className="text-purple-200">what do you need today?</span>
+    </h2>
+
+    {/* Active filters */}
+    {activeFiltersCount > 0 && (
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide mt-3">
+        {filters.availableOnly && (
+          <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+            style={{ background: "rgba(255,255,255,0.2)" }}>Available</span>
         )}
+        {filters.verifiedOnly && (
+          <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+            style={{ background: "rgba(255,255,255,0.2)" }}>Verified</span>
+        )}
+        {filters.minRating > 0 && (
+          <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+            style={{ background: "rgba(255,255,255,0.2)" }}>⭐ {filters.minRating}+</span>
+        )}
+        {filters.maxPrice < 10000 && (
+          <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+            style={{ background: "rgba(255,255,255,0.2)" }}>₹{filters.maxPrice} max</span>
+        )}
+        <button
+          onClick={() => setFilters({ minRating: 0, maxPrice: 10000, availableOnly: false, verifiedOnly: false, radius: 5, sortBy: "distance" })}
+          className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+          style={{ background: "rgba(239,68,68,0.5)" }}>
+          Clear all
+        </button>
       </div>
+    )}
+  </div>
+</div>
+
+{/* Categories card — overlapping hero */}
+<div className="px-4 -mt-5 relative z-10">
+  <div className="rounded-3xl p-3 overflow-x-auto"
+    style={{ background: "var(--bg-card)", boxShadow: "0 8px 32px rgba(124,58,237,0.12)", border: "1px solid var(--border)" }}>
+    <div className="grid grid-cols-4 gap-2 min-w-0">
+      {categories.map(cat => (
+        <button
+          key={cat.id}
+          onClick={() => setSelectedCategory(prev => prev === cat.slug ? null : cat.slug)}
+          className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl transition-all duration-200 active:scale-95"
+          style={selectedCategory === cat.slug ? {
+            background: "linear-gradient(135deg, #7c3aed, #ec4899)",
+            boxShadow: "0 4px 16px rgba(124,58,237,0.35)",
+          } : {
+            background: "transparent",
+          }}
+        >
+          <span className="text-2xl">{cat.icon}</span>
+          <span className="text-xs font-bold leading-tight text-center line-clamp-1"
+            style={{ color: selectedCategory === cat.slug ? "white" : "var(--text-secondary)" }}>
+            {language === "hi" ? cat.nameHi : cat.name}
+          </span>
+        </button>
+      ))}
+    </div>
+  </div>
+</div>
 
       {/* Categories */}
       <div className="px-4 -mt-4">
