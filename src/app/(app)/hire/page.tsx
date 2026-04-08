@@ -302,29 +302,6 @@ export default function HirePage() {
     </div>
   </div>
 </div>
-
-      {/* Categories */}
-      <div className="px-4 -mt-4">
-        <div className="bg-white rounded-3xl shadow-card p-3">
-          <div className="grid grid-cols-4 gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(prev => prev === cat.slug ? null : cat.slug)}
-                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-2xl transition-all duration-200 ${
-                  selectedCategory === cat.slug ? "bg-blue-500 text-white shadow-md" : "hover:bg-gray-50"
-                }`}
-              >
-                <span className="text-2xl">{cat.icon}</span>
-                <span className={`text-xs font-semibold leading-tight text-center line-clamp-1 ${selectedCategory === cat.slug ? "text-white" : "text-gray-600"}`}>
-                  {language === "hi" ? cat.nameHi : cat.name}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div className="px-4 py-4 space-y-5 pb-24">
         {/* Sort bar */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">

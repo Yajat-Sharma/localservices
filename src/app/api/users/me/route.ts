@@ -7,10 +7,21 @@ export async function PATCH(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name, language } = await req.json();
+  const { name, language, phone } = await req.json();
   const updateData: any = {};
-  if (name) updateData.name = name;
-  if (language) updateData.language = language;
+
+  if (name !== undefined) updateData.name = name;
+  if (language !== undefined) updateData.language = language;
+  if (phone !== undefined && phone !== null) {
+    // Check phone not already taken by someone else
+    const existing = await prisma.user.findFirst({
+      where: { phone, NOT: { id: user.id } }
+    });
+    if (existing) {
+      return NextResponse.json({ error: "Phone number already registered to another account" }, { status: 400 });
+    }
+    updateData.phone = phone;
+  }
 
   const updated = await prisma.user.update({
     where: { id: user.id },
