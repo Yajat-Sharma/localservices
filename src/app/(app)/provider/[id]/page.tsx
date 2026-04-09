@@ -50,6 +50,8 @@ export default function ProviderProfilePage() {
 
   const handleBook = async () => {
     if (!problem.trim()) { toast.error("Please describe your problem"); return; }
+    if (!scheduledDate) { toast.error("Please select a date for your appointment"); return; }
+    if (!scheduledTime) { toast.error("Please select a time for your appointment"); return; }
     if (!user) { router.push("/login"); return; }
     setBookingLoading(true);
     const token = localStorage.getItem("auth_token");
@@ -473,7 +475,7 @@ export default function ProviderProfilePage() {
               {/* Scheduling */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                  Date of Appointment
+                  Date of Appointment <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -487,14 +489,14 @@ export default function ProviderProfilePage() {
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                  Time of Appointment
+                      Time of Appointment <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={scheduledTime}
                       onChange={e => setScheduledTime(e.target.value)}
                       className="input-field text-sm"
                     >
-                      <option value="">Any time</option>
+                      <option value="">Select a time</option>
                       <option value="08:00">8:00 AM</option>
                       <option value="09:00">9:00 AM</option>
                       <option value="10:00">10:00 AM</option>
