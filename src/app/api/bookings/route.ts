@@ -62,7 +62,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Provider is unavailable", message: "This provider is currently unavailable." }, { status: 400 });
   }
 
-  // Combine date + time into a proper DateTime
   const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}:00`);
 
   const booking = await prisma.booking.create({
@@ -91,7 +90,6 @@ export async function POST(req: NextRequest) {
     await prisma.provider.update({ where: { id: providerId }, data: { totalBookings: { increment: 1 } } });
   }
 
-  // Format scheduled date/time nicely for the email
   const formattedDate = scheduledAt.toLocaleDateString("en-IN", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
@@ -99,12 +97,14 @@ export async function POST(req: NextRequest) {
     hour: "2-digit", minute: "2-digit", hour12: true,
   });
 
-  // Send rich email to provider
-  if (provider.user.email) {
-    await sendEmail(
-      provider.user.email,
-      `🔔 New Booking Request — ${provider.category.name} | ${formattedDate}`,
-      `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; border-radius: 16px; overflow: hidden;">
+  // ── Fix #2: Fire-and-forget — emails + notifications run after response ────
+  // Removing `await` prevents Gmail latency from blocking the booking response.
+  void Promise.all([
+    provider.user.email
+      ? sendEmail(
+          provider.user.email,
+          `🔔 New Booking Request — ${provider.category.name} | ${formattedDate}`,
+          `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; border-radius: 16px; overflow: hidden;">
         <div style="background: linear-gradient(135deg, #2563eb, #4f46e5); padding: 28px 24px;">
           <h1 style="color: white; margin: 0; font-size: 22px;">🔔 New Booking Request!</h1>
           <p style="color: rgba(255,255,255,0.8); margin: 6px 0 0; font-size: 14px;">${provider.category.name} service</p>
@@ -141,15 +141,14 @@ export async function POST(req: NextRequest) {
           </div>
         </div>
       </div>`
-    );
-  }
+        )
+      : Promise.resolve(),
 
-  // Send confirmation to customer
-  if (user.email) {
-    await sendEmail(
-      user.email,
-      `✅ Booking Confirmed — ${provider.category.name} on ${formattedDate}`,
-      `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; border-radius: 16px; overflow: hidden;">
+    user.email
+      ? sendEmail(
+          user.email,
+          `✅ Booking Confirmed — ${provider.category.name} on ${formattedDate}`,
+          `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; border-radius: 16px; overflow: hidden;">
         <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 28px 24px;">
           <h1 style="color: white; margin: 0; font-size: 22px;">✅ Booking Request Sent!</h1>
           <p style="color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 14px;">Your request is being reviewed by the provider</p>
@@ -178,26 +177,25 @@ export async function POST(req: NextRequest) {
           </div>
         </div>
       </div>`
-    );
-  }
+        )
+      : Promise.resolve(),
 
-  // Notify provider
-  await createNotification({
-    userId: provider.userId,
-    title: "New Booking Request! 🔔",
-    message: `${booking.customer.name || "A customer"} booked your ${provider.category.name} for ${formattedDate} at ${formattedTime}`,
-    type: "booking",
-    link: "/bookings",
-  });
+    createNotification({
+      userId: provider.userId,
+      title: "New Booking Request! 🔔",
+      message: `${booking.customer.name || "A customer"} booked your ${provider.category.name} for ${formattedDate} at ${formattedTime}`,
+      type: "booking",
+      link: "/bookings",
+    }),
 
-  // Notify customer
-  await createNotification({
-    userId: user.id,
-    title: "Booking Sent! ✅",
-    message: `Your request to ${provider.businessName} for ${formattedDate} has been sent`,
-    type: "success",
-    link: "/bookings",
-  });
+    createNotification({
+      userId: user.id,
+      title: "Booking Sent! ✅",
+      message: `Your request to ${provider.businessName} for ${formattedDate} has been sent`,
+      type: "success",
+      link: "/bookings",
+    }),
+  ]).catch((err) => console.error("[bookings POST] background task error:", err));
 
   return NextResponse.json({ booking }, { status: 201 });
-}
+}

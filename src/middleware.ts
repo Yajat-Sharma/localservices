@@ -15,7 +15,16 @@ const PUBLIC_API = [
 ];
 
 export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const { pathname, hostname } = req.nextUrl;
+
+  // ── Fix #1: www → non-www redirect (resolves SSL cert mismatch) ──────────
+  // The SSL cert covers localservices.com but NOT www.localservices.com.
+  // Redirect all www traffic at the edge so browsers never see the cert error.
+  if (hostname.startsWith("www.")) {
+    const url = req.nextUrl.clone();
+    url.hostname = hostname.slice(4); // strip "www."
+    return NextResponse.redirect(url, { status: 301 });
+  }
 
   if (PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
     return NextResponse.next();
