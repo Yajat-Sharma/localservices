@@ -4,11 +4,15 @@ import { useRouter } from "next/navigation";
 import { TopNav } from "@/components/shared/TopNav";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, AreaChart, Area, CartesianGrid, Legend,
+} from "recharts";
 import axios from "axios";
 import toast from "react-hot-toast";
 
 const COLORS = ["#0c8ee8", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+const FUNNEL_COLORS = ["#94a3b8", "#60a5fa", "#f59e0b", "#10b981", "#ef4444"];
 
 export default function AdminPage() {
   const { t } = useLanguage();
@@ -18,15 +22,27 @@ export default function AdminPage() {
   const [pendingProviders, setPendingProviders] = useState<any[]>([]);
   const [allProviders, setAllProviders] = useState<any[]>([]);
   const [docProviders, setDocProviders] = useState<any[]>([]);
-  const [tab, setTab] = useState<"stats" | "pending" | "all" | "documents">("stats");
+  const [tab, setTab] = useState<"stats" | "pending" | "all" | "documents" | "analytics">("stats");
   const [loading, setLoading] = useState(true);
   const [viewingProvider, setViewingProvider] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<{
+    bookingsPerDay: { date: string; count: number }[];
+    revenueByCategory: { name: string; icon: string; revenue: number; bookings: number }[];
+    topProviders: { name: string; revenue: number; bookings: number; rating: number; category: string; icon: string }[];
+    funnelData: { stage: string; count: number }[];
+  } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [dateRange, setDateRange] = useState<7 | 30 | 90>(30);
 
   useEffect(() => {
     if (!user) { router.replace("/login"); return; }
     if (user.role !== "ADMIN") { router.replace("/hire"); return; }
     fetchData();
   }, [user]);
+
+  useEffect(() => {
+    if (tab === "analytics") fetchAnalytics(dateRange);
+  }, [tab, dateRange]);
 
   const fetchData = async () => {
     const token = localStorage.getItem("auth_token");
@@ -43,6 +59,18 @@ export default function AdminPage() {
       setDocProviders(d.data.providers);
     } catch { toast.error("Failed to load"); }
     finally { setLoading(false); }
+  };
+
+  const fetchAnalytics = async (days: number) => {
+    const token = localStorage.getItem("auth_token");
+    setAnalyticsLoading(true);
+    try {
+      const res = await axios.get(`/api/admin/analytics?days=${days}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAnalytics(res.data);
+    } catch { toast.error("Failed to load analytics"); }
+    finally { setAnalyticsLoading(false); }
   };
 
   const approveProvider = async (id: string, approve: boolean) => {
@@ -189,6 +217,7 @@ export default function AdminPage() {
       <div className="glass-nav px-4 py-3 flex gap-2 overflow-x-auto scrollbar-hide">
         {([
           { key: "stats", label: "Dashboard" },
+          { key: "analytics", label: "Analytics" },
           { key: "pending", label: `Pending (${stats.pendingProviders})` },
           { key: "all", label: "All Providers" },
           { key: "documents", label: `Documents${pendingDocs > 0 ? ` (${pendingDocs})` : ""}` },
@@ -294,6 +323,233 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {tab === "analytics" && (
+          <div className="space-y-5">
+
+            {/* Date Range Toggle */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Platform Analytics</h2>
+              <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
+                {([7, 30, 90] as const).map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setDateRange(d)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      dateRange === d
+                        ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    {d}d
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {analyticsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4].map(i => <div key={i} className="card h-52 skeleton" />)}
+              </div>
+            ) : !analytics ? (
+              <div className="card p-8 text-center">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No analytics data available yet.</p>
+              </div>
+            ) : (
+              <>
+                {/* ── Bookings Trend ─────────────────────────────────── */}
+                <div className="card p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900 dark:text-white">Bookings Trend</h3>
+                    <span className="tag tag-blue">
+                      {analytics.bookingsPerDay.reduce((s, d) => s + d.count, 0)} total
+                    </span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <AreaChart data={analytics.bookingsPerDay} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="bookingGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#0c8ee8" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#0c8ee8" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tickLine={false}
+                        interval={dateRange === 7 ? 0 : dateRange === 30 ? 4 : 13}
+                      />
+                      <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{ background: "#1e293b", border: "none", borderRadius: "12px", fontSize: "12px" }}
+                        labelStyle={{ color: "#94a3b8" }}
+                        itemStyle={{ color: "#0c8ee8" }}
+                      />
+                      <Area type="monotone" dataKey="count" stroke="#0c8ee8" strokeWidth={2} fill="url(#bookingGrad)" name="Bookings" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* ── Revenue by Category ─────────────────────────────── */}
+                <div className="card p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900 dark:text-white">Revenue by Category</h3>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">(priced bookings only)</span>
+                  </div>
+                  {analytics.revenueByCategory.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-6">No revenue data yet</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={Math.max(160, analytics.revenueByCategory.length * 44)}>
+                      <BarChart
+                        data={analytics.revenueByCategory}
+                        layout="vertical"
+                        margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(148,163,184,0.15)" />
+                        <XAxis type="number" tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false}
+                          tickFormatter={(v) => `₹${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`}
+                        />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} tickLine={false} axisLine={false} width={80} />
+                        <Tooltip
+                          contentStyle={{ background: "#1e293b", border: "none", borderRadius: "12px", fontSize: "12px" }}
+                          labelStyle={{ color: "#94a3b8" }}
+                          formatter={(value: any, name: string) => [
+                            name === "revenue" ? `₹${Number(value).toLocaleString("en-IN")}` : value,
+                            name === "revenue" ? "Revenue" : "Bookings",
+                          ]}
+                        />
+                        <Bar dataKey="revenue" radius={[0, 6, 6, 0]} name="revenue">
+                          {analytics.revenueByCategory.map((_: any, index: number) => (
+                            <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                  {/* Category legend */}
+                  {analytics.revenueByCategory.length > 0 && (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {analytics.revenueByCategory.map((cat, i) => (
+                        <div key={cat.name} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-slate-800 rounded-xl">
+                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{cat.icon} {cat.name}</span>
+                          <span className="text-xs font-bold text-gray-800 dark:text-gray-200 ml-auto">₹{(cat.revenue / 1000).toFixed(0)}k</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Top Providers ───────────────────────────────────── */}
+                <div className="card p-4">
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-4">Top Providers</h3>
+                  {analytics.topProviders.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-6">No provider data yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {analytics.topProviders.map((prov, i) => {
+                        const maxBookings = analytics.topProviders[0]?.bookings || 1;
+                        const pct = Math.round((prov.bookings / maxBookings) * 100);
+                        return (
+                          <div key={prov.name} className="flex items-center gap-3">
+                            {/* Rank */}
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                              i === 0 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
+                              i === 1 ? "bg-gray-100 dark:bg-slate-700 text-gray-500" :
+                              i === 2 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-500" :
+                              "bg-gray-50 dark:bg-slate-800 text-gray-400"
+                            }`}>
+                              {i + 1}
+                            </div>
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                  {prov.icon} {prov.name}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                  ₹{prov.revenue.toLocaleString("en-IN")}
+                                </span>
+                              </div>
+                              {/* Progress bar */}
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }}
+                                  />
+                                </div>
+                                <span className="text-xs text-gray-400 flex-shrink-0">{prov.bookings} jobs</span>
+                                <span className="text-xs text-amber-500 flex-shrink-0">★ {prov.rating.toFixed(1)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Booking Funnel ──────────────────────────────────── */}
+                <div className="card p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900 dark:text-white">Booking Funnel</h3>
+                    <span className="text-xs text-gray-400">All time</span>
+                  </div>
+                  {analytics.funnelData.every(f => f.count === 0) ? (
+                    <p className="text-sm text-gray-400 text-center py-6">No bookings yet</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(() => {
+                        const maxCount = Math.max(...analytics.funnelData.map(f => f.count), 1);
+                        const total = analytics.funnelData.find(f => f.stage === "Pending")?.count || maxCount;
+                        return analytics.funnelData.map((item, i) => {
+                          const widthPct = Math.round((item.count / maxCount) * 100);
+                          const convPct = total > 0 ? Math.round((item.count / total) * 100) : 0;
+                          return (
+                            <div key={item.stage}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.stage}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-400">{convPct}% of total</span>
+                                  <span className="text-sm font-bold" style={{ color: FUNNEL_COLORS[i] }}>{item.count}</span>
+                                </div>
+                              </div>
+                              <div className="h-7 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-hidden">
+                                <div
+                                  className="h-full rounded-lg flex items-center px-2 transition-all duration-700"
+                                  style={{ width: `${widthPct}%`, backgroundColor: FUNNEL_COLORS[i], opacity: 0.85 }}
+                                >
+                                  {widthPct > 15 && (
+                                    <span className="text-xs font-semibold text-white">{item.count}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                      {/* Completion Rate Callout */}
+                      {(() => {
+                        const pending = analytics.funnelData.find(f => f.stage === "Pending")?.count || 0;
+                        const completed = analytics.funnelData.find(f => f.stage === "Completed")?.count || 0;
+                        const rate = pending > 0 ? Math.round((completed / pending) * 100) : 0;
+                        return (
+                          <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-between">
+                            <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Overall Completion Rate</span>
+                            <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{rate}%</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
