@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
+const ADMIN_EMAIL = "yajats@gmail.com";
+
 export async function POST(req: NextRequest) {
   try {
     const { name, email, password } = await req.json();
@@ -23,6 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const isAdmin = email === ADMIN_EMAIL;
 
     const user = await prisma.user.create({
       data: {
@@ -30,6 +33,7 @@ export async function POST(req: NextRequest) {
         email,
         password: hashedPassword,
         phone: null,
+        role: isAdmin ? "ADMIN" : "CUSTOMER",
       },
       include: { provider: { include: { category: true } } },
     });
