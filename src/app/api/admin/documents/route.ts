@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { providerId, idProofStatus, licenseStatus } = await req.json();
+  const { providerId, idProofStatus, licenseStatus, reason } = await req.json();
   const updateData: any = {};
   if (idProofStatus) updateData.idProofStatus = idProofStatus;
   if (licenseStatus) updateData.licenseStatus = licenseStatus;
@@ -41,7 +41,20 @@ export async function PATCH(req: NextRequest) {
   const provider = await prisma.provider.update({
     where: { id: providerId },
     data: updateData,
+    include: { user: true }
   });
+
+  if (reason && (idProofStatus === "REJECTED" || licenseStatus === "REJECTED")) {
+    const docName = idProofStatus === "REJECTED" ? "ID Proof" : "Business License";
+    await prisma.notification.create({
+      data: {
+        userId: provider.userId,
+        title: `${docName} Rejected`,
+        message: `Your ${docName} was rejected by the admin. Reason: ${reason}. Please upload a new document.`,
+        type: "error",
+      }
+    });
+  }
 
   return NextResponse.json({ provider });
 }

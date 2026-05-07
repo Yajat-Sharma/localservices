@@ -101,10 +101,10 @@ export default function AdminPage() {
     } catch { toast.error("Failed"); }
   };
 
-  const reviewDocument = async (providerId: string, type: "idProofStatus" | "licenseStatus", status: "APPROVED" | "REJECTED") => {
+  const reviewDocument = async (providerId: string, type: "idProofStatus" | "licenseStatus", status: "APPROVED" | "REJECTED", reason?: string) => {
     const token = localStorage.getItem("auth_token");
     try {
-      await axios.patch("/api/admin/documents", { providerId, [type]: status }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.patch("/api/admin/documents", { providerId, [type]: status, reason }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(status === "APPROVED" ? "Document approved!" : "Document rejected");
       fetchData();
       if (viewingProvider && viewingProvider.id === providerId) {
@@ -719,7 +719,10 @@ export default function AdminPage() {
                         {viewingProvider.idProofStatus === "PENDING" && (
                           <div className="flex gap-2 mt-2">
                             <button onClick={() => reviewDocument(viewingProvider.id, "idProofStatus", "APPROVED")} className="flex-1 btn-primary text-xs py-2">Approve ID</button>
-                            <button onClick={() => reviewDocument(viewingProvider.id, "idProofStatus", "REJECTED")} className="flex-1 text-xs py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 transition-colors">Reject ID</button>
+                            <button onClick={() => {
+                              const reason = window.prompt("Reason for rejection (e.g. Please re-upload a clearer image):");
+                              if (reason !== null) reviewDocument(viewingProvider.id, "idProofStatus", "REJECTED", reason);
+                            }} className="flex-1 text-xs py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 transition-colors">Reject ID</button>
                           </div>
                         )}
                       </div>
@@ -740,7 +743,10 @@ export default function AdminPage() {
                         {viewingProvider.licenseStatus === "PENDING" && (
                           <div className="flex gap-2 mt-2">
                             <button onClick={() => reviewDocument(viewingProvider.id, "licenseStatus", "APPROVED")} className="flex-1 btn-primary text-xs py-2">Approve License</button>
-                            <button onClick={() => reviewDocument(viewingProvider.id, "licenseStatus", "REJECTED")} className="flex-1 text-xs py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 transition-colors">Reject License</button>
+                            <button onClick={() => {
+                              const reason = window.prompt("Reason for rejection (e.g. Please upload a valid document):");
+                              if (reason !== null) reviewDocument(viewingProvider.id, "licenseStatus", "REJECTED", reason);
+                            }} className="flex-1 text-xs py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 transition-colors">Reject License</button>
                           </div>
                         )}
                       </div>
