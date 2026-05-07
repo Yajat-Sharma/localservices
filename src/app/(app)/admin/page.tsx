@@ -107,6 +107,9 @@ export default function AdminPage() {
       await axios.patch("/api/admin/documents", { providerId, [type]: status }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(status === "APPROVED" ? "Document approved!" : "Document rejected");
       fetchData();
+      if (viewingProvider && viewingProvider.id === providerId) {
+        setViewingProvider((prev: any) => ({ ...prev, [type]: status }));
+      }
     } catch { toast.error("Failed"); }
   };
 
@@ -220,7 +223,6 @@ export default function AdminPage() {
           { key: "analytics", label: "Analytics" },
           { key: "pending", label: `Pending (${stats.pendingProviders})` },
           { key: "all", label: "All Providers" },
-          { key: "documents", label: `Documents${pendingDocs > 0 ? ` (${pendingDocs})` : ""}` },
         ] as const).map(t_ => (
           <button
             key={t_.key}
@@ -577,92 +579,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Documents Tab */}
-        {tab === "documents" && (
-          <div className="space-y-4">
-            {loading ? (
-              [1, 2].map(i => <div key={i} className="card h-48 skeleton" />)
-            ) : docProviders.length === 0 ? (
-              <div className="text-center py-12 card p-8">
-                <div className="w-16 h-16 rounded-3xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
-                </div>
-                <p className="font-semibold text-gray-600 dark:text-gray-300">No documents uploaded yet</p>
-                <p className="text-sm text-gray-400 mt-1">Documents will appear here when providers upload them</p>
-              </div>
-            ) : (
-              docProviders.map((prov: any) => (
-                <div key={prov.id} className="card p-4">
-                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-slate-700">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-lg">
-                      {prov.category?.icon}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1">
-                        <h3 className="font-bold text-sm dark:text-white">{prov.businessName}</h3>
-                        {prov.isVerified && <span className="verified-badge">Verified</span>}
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{prov.user?.phone} • {prov.city}</p>
-                    </div>
-                  </div>
 
-                  {prov.idProofUrl && (
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">ID Proof</p>
-                        <span className={`tag ${prov.idProofStatus === "APPROVED" ? "tag-green" : prov.idProofStatus === "REJECTED" ? "tag-red" : "tag-orange"}`}>
-                          {prov.idProofStatus === "APPROVED" ? "Approved" : prov.idProofStatus === "REJECTED" ? "Rejected" : "Pending"}
-                        </span>
-                      </div>
-                      <a href={prov.idProofUrl} target="_blank" rel="noopener noreferrer" className="block">
-                        <div className="relative h-36 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700 hover:opacity-90 transition-opacity">
-                          <img src={prov.idProofUrl} alt="ID Proof" className="w-full h-full object-cover" />
-                        </div>
-                      </a>
-                      {prov.idProofStatus === "PENDING" && (
-                        <div className="flex gap-2 mt-2">
-                          <button onClick={() => reviewDocument(prov.id, "idProofStatus", "APPROVED")} className="flex-1 btn-primary text-xs py-2">Approve ID</button>
-                          <button onClick={() => reviewDocument(prov.id, "idProofStatus", "REJECTED")} className="flex-1 text-xs py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 transition-colors">Reject ID</button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {prov.licenseUrl && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Business License</p>
-                        <span className={`tag ${prov.licenseStatus === "APPROVED" ? "tag-green" : prov.licenseStatus === "REJECTED" ? "tag-red" : "tag-orange"}`}>
-                          {prov.licenseStatus === "APPROVED" ? "Approved" : prov.licenseStatus === "REJECTED" ? "Rejected" : "Pending"}
-                        </span>
-                      </div>
-                      <a href={prov.licenseUrl} target="_blank" rel="noopener noreferrer" className="block">
-                        <div className="relative h-36 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700 hover:opacity-90 transition-opacity">
-                          <img src={prov.licenseUrl} alt="License" className="w-full h-full object-cover" />
-                        </div>
-                      </a>
-                      {prov.licenseStatus === "PENDING" && (
-                        <div className="flex gap-2 mt-2">
-                          <button onClick={() => reviewDocument(prov.id, "licenseStatus", "APPROVED")} className="flex-1 btn-primary text-xs py-2">Approve License</button>
-                          <button onClick={() => reviewDocument(prov.id, "licenseStatus", "REJECTED")} className="flex-1 text-xs py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 transition-colors">Reject License</button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {prov.idProofStatus === "APPROVED" && prov.licenseStatus === "APPROVED" && !prov.isVerified && (
-                    <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
-                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">Both documents approved! Provider will be auto-verified.</p>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
       </div>
 
       {/* Provider Profile View Modal */}
@@ -785,23 +702,49 @@ export default function AdminPage() {
               {(viewingProvider.idProofUrl || viewingProvider.licenseUrl) && (
                 <div className="card p-4">
                   <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-3">Documents</h4>
-                  <div className="space-y-2">
-                    {[
-                      { label: "ID Proof", url: viewingProvider.idProofUrl, status: viewingProvider.idProofStatus },
-                      { label: "License", url: viewingProvider.licenseUrl, status: viewingProvider.licenseStatus },
-                    ].filter(d => d.url).map((doc, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-xl">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{doc.label}</span>
-                        <div className="flex items-center gap-2">
-                          <span className={`tag ${doc.status === "APPROVED" ? "tag-green" : doc.status === "REJECTED" ? "tag-red" : "tag-orange"}`}>
-                            {doc.status}
+                  <div className="space-y-4">
+                    {viewingProvider.idProofUrl && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">ID Proof</span>
+                          <span className={`tag ${viewingProvider.idProofStatus === "APPROVED" ? "tag-green" : viewingProvider.idProofStatus === "REJECTED" ? "tag-red" : "tag-orange"}`}>
+                            {viewingProvider.idProofStatus === "APPROVED" ? "Approved" : viewingProvider.idProofStatus === "REJECTED" ? "Rejected" : "Pending"}
                           </span>
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 font-semibold hover:underline">
-                            View
-                          </a>
                         </div>
+                        <a href={viewingProvider.idProofUrl} target="_blank" rel="noopener noreferrer" className="block">
+                          <div className="relative h-36 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700 hover:opacity-90 transition-opacity">
+                            <img src={viewingProvider.idProofUrl} alt="ID Proof" className="w-full h-full object-cover" />
+                          </div>
+                        </a>
+                        {viewingProvider.idProofStatus === "PENDING" && (
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => reviewDocument(viewingProvider.id, "idProofStatus", "APPROVED")} className="flex-1 btn-primary text-xs py-2">Approve ID</button>
+                            <button onClick={() => reviewDocument(viewingProvider.id, "idProofStatus", "REJECTED")} className="flex-1 text-xs py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 transition-colors">Reject ID</button>
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    )}
+                    {viewingProvider.licenseUrl && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Business License</span>
+                          <span className={`tag ${viewingProvider.licenseStatus === "APPROVED" ? "tag-green" : viewingProvider.licenseStatus === "REJECTED" ? "tag-red" : "tag-orange"}`}>
+                            {viewingProvider.licenseStatus === "APPROVED" ? "Approved" : viewingProvider.licenseStatus === "REJECTED" ? "Rejected" : "Pending"}
+                          </span>
+                        </div>
+                        <a href={viewingProvider.licenseUrl} target="_blank" rel="noopener noreferrer" className="block">
+                          <div className="relative h-36 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700 hover:opacity-90 transition-opacity">
+                            <img src={viewingProvider.licenseUrl} alt="License" className="w-full h-full object-cover" />
+                          </div>
+                        </a>
+                        {viewingProvider.licenseStatus === "PENDING" && (
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => reviewDocument(viewingProvider.id, "licenseStatus", "APPROVED")} className="flex-1 btn-primary text-xs py-2">Approve License</button>
+                            <button onClick={() => reviewDocument(viewingProvider.id, "licenseStatus", "REJECTED")} className="flex-1 text-xs py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 transition-colors">Reject License</button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
