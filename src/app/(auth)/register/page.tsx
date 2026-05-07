@@ -213,7 +213,7 @@ function RegisterPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                  <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder="Min 6 characters" className="input-field" />
+                  <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder="Min 6 characters" className="input-field placeholder:text-gray-400 dark:placeholder:text-slate-500" />
                 </div>
                 <button onClick={handleEmailRegister} disabled={loading} className="btn-primary w-full">
                   {loading ? "Creating account..." : "Create Account"}

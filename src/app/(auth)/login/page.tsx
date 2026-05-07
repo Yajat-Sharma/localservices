@@ -205,7 +205,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="input-field pr-12"
+                  className="input-field pr-12 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                   onKeyDown={e => e.key === "Enter" && handleEmailLogin()}
                   style={{
                     color: "var(--text-input)",
