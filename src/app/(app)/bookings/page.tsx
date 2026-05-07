@@ -290,7 +290,7 @@ export default function BookingsPage() {
                   )}
 
                   {/* Chat button — always visible */}
-                  <Link href={`/chat/${booking.providerId}`}
+                  <Link href={`/chat/${booking.id}`}
                     className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-105 active:scale-95"
                     style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.1), rgba(236,72,153,0.08))", color: "var(--primary)" }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

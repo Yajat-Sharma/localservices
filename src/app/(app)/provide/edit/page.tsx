@@ -18,6 +18,11 @@ export default function ProviderEditPage() {
     priceMax: "",
     whatsapp: "",
     allowMultiple: false,
+    workingHours: {
+      startHour: 8,
+      endHour: 18,
+      days: [1, 2, 3, 4, 5, 6], // Mon–Sat by default
+    },
   });
 
   useEffect(() => {
@@ -30,6 +35,7 @@ export default function ProviderEditPage() {
       priceMax: String(p.priceMax || ""),
       whatsapp: p.whatsapp || "",
       allowMultiple: p.allowMultiple || false,
+      workingHours: p.workingHours || { startHour: 8, endHour: 18, days: [1,2,3,4,5,6] },
     });
   }, [user]);
 
@@ -47,6 +53,7 @@ export default function ProviderEditPage() {
         priceMax: Number(form.priceMax),
         whatsapp: form.whatsapp,
         allowMultiple: form.allowMultiple,
+        workingHours: form.workingHours,
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       setUser({ ...user!, provider: { ...user!.provider!, ...res.data.provider } } as any);
@@ -145,6 +152,70 @@ export default function ProviderEditPage() {
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.allowMultiple ? "translate-x-6" : ""}`} />
           </button>
+        </div>
+
+        {/* Working Hours */}
+        <div className="card p-4 space-y-4">
+          <h3 className="font-bold text-gray-900 text-sm">⏰ Working Hours</h3>
+          <p className="text-xs text-gray-500 -mt-2">Customers will only be able to book within these hours</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Start Time</label>
+              <select
+                value={form.workingHours.startHour}
+                onChange={e => setForm({...form, workingHours: {...form.workingHours, startHour: Number(e.target.value)}})}
+                className="input-field text-sm"
+              >
+                {Array.from({length: 13}, (_, i) => i + 6).map(h => (
+                  <option key={h} value={h}>
+                    {h < 12 ? `${h}:00 AM` : h === 12 ? "12:00 PM" : `${h-12}:00 PM`}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">End Time</label>
+              <select
+                value={form.workingHours.endHour}
+                onChange={e => setForm({...form, workingHours: {...form.workingHours, endHour: Number(e.target.value)}})}
+                className="input-field text-sm"
+              >
+                {Array.from({length: 13}, (_, i) => i + 10).map(h => (
+                  <option key={h} value={h}>
+                    {h < 12 ? `${h}:00 AM` : h === 12 ? "12:00 PM" : `${h-12}:00 PM`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-2">Working Days</label>
+            <div className="flex gap-2 flex-wrap">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => {
+                const active = form.workingHours.days.includes(i);
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => {
+                      const days = active
+                        ? form.workingHours.days.filter((d: number) => d !== i)
+                        : [...form.workingHours.days, i].sort();
+                      setForm({...form, workingHours: {...form.workingHours, days}});
+                    }}
+                    className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${
+                      active ? "text-white" : "bg-gray-100 text-gray-500"
+                    }`}
+                    style={active ? { background: "linear-gradient(135deg, #7c3aed, #ec4899)" } : {}}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -31,6 +31,27 @@ export default function ProviderProfilePage() {
   const [scheduledTime, setScheduledTime] = useState("");
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
 
+  // Generate available time slots from provider's working hours
+  const getTimeSlots = () => {
+    const wh = provider?.workingHours as any;
+    const start = wh?.startHour ?? 8;
+    const end = wh?.endHour ?? 18;
+    const slots = [];
+    for (let h = start; h < end; h++) {
+      const label = h < 12 ? `${h}:00 AM` : h === 12 ? "12:00 PM" : `${h - 12}:00 PM`;
+      slots.push({ value: `${String(h).padStart(2, "0")}:00`, label });
+    }
+    return slots;
+  };
+
+  const isDateAllowed = (dateStr: string) => {
+    if (!dateStr) return true;
+    const wh = provider?.workingHours as any;
+    if (!wh?.days) return true;
+    const dayOfWeek = new Date(dateStr + "T12:00:00").getDay();
+    return (wh.days as number[]).includes(dayOfWeek);
+  };
+
   useEffect(() => { fetchProvider(); }, [id]);
 
   const fetchProvider = async () => {
@@ -51,6 +72,13 @@ export default function ProviderProfilePage() {
   const handleBook = async () => {
     if (!problem.trim()) { toast.error("Please describe your problem"); return; }
     if (!scheduledDate) { toast.error("Please select a date for your appointment"); return; }
+    if (!isDateAllowed(scheduledDate)) {
+      const wh = provider?.workingHours as any;
+      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const allowed = (wh?.days as number[] || []).map((d: number) => days[d]).join(", ");
+      toast.error(`Provider works only on: ${allowed}`);
+      return;
+    }
     if (!scheduledTime) { toast.error("Please select a time for your appointment"); return; }
     if (!user) { router.push("/login"); return; }
     setBookingLoading(true);
@@ -220,7 +248,7 @@ export default function ProviderProfilePage() {
             </button>
 
             <button
-              onClick={() => router.push(`/chat/${id}`)}
+              onClick={() => router.push(`/bookings`)}
               className="card p-4 flex flex-col items-center gap-2 hover:shadow-md transition-all active:scale-95"
             >
               <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
@@ -497,17 +525,9 @@ export default function ProviderProfilePage() {
                       className="input-field text-sm"
                     >
                       <option value="">Select a time</option>
-                      <option value="08:00">8:00 AM</option>
-                      <option value="09:00">9:00 AM</option>
-                      <option value="10:00">10:00 AM</option>
-                      <option value="11:00">11:00 AM</option>
-                      <option value="12:00">12:00 PM</option>
-                      <option value="13:00">1:00 PM</option>
-                      <option value="14:00">2:00 PM</option>
-                      <option value="15:00">3:00 PM</option>
-                      <option value="16:00">4:00 PM</option>
-                      <option value="17:00">5:00 PM</option>
-                      <option value="18:00">6:00 PM</option>
+                      {getTimeSlots().map(slot => (
+                        <option key={slot.value} value={slot.value}>{slot.label}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

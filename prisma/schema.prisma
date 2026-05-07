@@ -73,6 +73,7 @@ model Provider {
   licenseStatus    DocumentStatus @default(PENDING)
   portfolio        String[]  @default([])
   pushSubscription String?
+  workingHours     Json?
 
   bookings Booking[]
   reviews  Review[]
