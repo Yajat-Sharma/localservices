@@ -53,7 +53,7 @@ export default function ChatPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessages(res.data.messages);
-    } catch {}
+    } catch { }
   };
 
   const sendMessage = async () => {
@@ -119,12 +119,11 @@ export default function ChatPage() {
                 const isMe = msg.senderId === user?.id;
                 return (
                   <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-xs rounded-2xl px-4 py-2.5 ${
-                      isMe
+                    <div className={`max-w-xs rounded-2xl px-4 py-2.5 ${isMe
                         ? "rounded-br-sm text-white"
                         : "rounded-bl-sm shadow-sm bg-white dark:bg-slate-800"
-                    }`}
-                    style={isMe ? { background: "linear-gradient(135deg, #7c3aed, #ec4899)" } : {}}>
+                      }`}
+                      style={isMe ? { background: "linear-gradient(135deg, #7c3aed, #ec4899)" } : {}}>
                       <p className={`text-sm leading-relaxed ${isMe ? "text-white" : "text-gray-900 dark:text-white"}`}>
                         {msg.content}
                       </p>
@@ -159,8 +158,8 @@ export default function ChatPage() {
                 {sending
                   ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
+                    <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
                 }
               </button>
             </div>

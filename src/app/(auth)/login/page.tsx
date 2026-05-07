@@ -262,7 +262,7 @@ export default function LoginPage() {
                     <input type="tel" value={phone}
                       onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
                       placeholder="9876543210" maxLength={10}
-                      className="input-field flex-1"
+                      className="input-field flex-1 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                       style={{ color: "var(--text-input)", background: "var(--bg-input)" }}
                     />
                   </div>

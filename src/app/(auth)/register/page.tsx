@@ -223,7 +223,7 @@ function RegisterPage() {
               <>
                 <div className="flex gap-2 mb-4">
                   <div className="flex items-center px-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium">🇮🇳 +91</div>
-                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g,""))} placeholder="9876543210" maxLength={10} className="input-field flex-1" onKeyDown={(e) => e.key === "Enter" && handleSendOtp()} />
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g,""))} placeholder="9876543210" maxLength={10} className="input-field flex-1 placeholder:text-gray-400 dark:placeholder:text-slate-500" onKeyDown={(e) => e.key === "Enter" && handleSendOtp()} />
                 </div>
                 <button onClick={handleSendOtp} disabled={loading || phone.length < 10} className="btn-primary w-full">
                   {loading ? "Sending..." : t("send_otp")}
