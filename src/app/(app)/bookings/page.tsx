@@ -18,9 +18,10 @@ export default function BookingsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.replace("/login"); return; }
     fetchBookings();
-  }, [user]);
+  }, [user, isLoading]);
 
   const fetchBookings = async () => {
     const token = localStorage.getItem("auth_token");

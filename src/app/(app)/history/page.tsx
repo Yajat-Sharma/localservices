@@ -8,18 +8,19 @@ import axios from "axios";
 
 export default function HistoryPage() {
   const { t } = useLanguage();
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.replace("/login"); return; }
     const token = localStorage.getItem("auth_token");
     axios.get("/api/bookings", { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setBookings(res.data.bookings.filter((b: any) => ["COMPLETED","CANCELLED"].includes(b.status))))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, isLoading]);
 
   return (
     <div className="min-h-screen bg-gray-50">

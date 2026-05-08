@@ -27,17 +27,18 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function ProviderDashboardPage() {
   const { t } = useLanguage();
-  const user = useAuthStore((state) => state.user);
+  const { user, isLoading } = useAuthStore();
   const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"overview" | "bookings">("overview");
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.replace("/login"); return; }
     if (user.role !== "PROVIDER") { router.replace("/hire"); return; }
     fetchData();
-  }, [user]);
+  }, [user, isLoading]);
 
   const fetchData = async () => {
     const token = localStorage.getItem("auth_token");

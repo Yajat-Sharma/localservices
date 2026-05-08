@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 export default function ChatPage() {
   const { providerId } = useParams<{ providerId: string }>();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const [messages, setMessages] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [loading, setLoading] = useState(true);
@@ -20,10 +20,11 @@ export default function ChatPage() {
   const pollRef = useRef<any>();
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.replace("/login"); return; }
     initChat();
     return () => clearInterval(pollRef.current);
-  }, []);
+  }, [user, isLoading]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
