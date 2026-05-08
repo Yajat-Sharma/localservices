@@ -13,7 +13,27 @@ export async function GET(req: NextRequest) {
   const where: any = { isApproved: true };
   if (category) where.category = { slug: category };
   if (search) where.OR = [{ businessName: { contains: search, mode: "insensitive" } }, { description: { contains: search, mode: "insensitive" } }];
-  const providers = await prisma.provider.findMany({ where, include: { user: { select: { name: true, avatar: true, phone: true } }, category: true }, orderBy: [{ avgRating: "desc" }] });
+  const providers = await prisma.provider.findMany({
+    where,
+    select: {
+      id: true,
+      businessName: true,
+      description: true,
+      avgRating: true,
+      totalReviews: true,
+      priceMin: true,
+      priceMax: true,
+      isAvailable: true,
+      isVerified: true,
+      images: true,
+      latitude: true,
+      longitude: true,
+      unavailableUntil: true,
+      user: { select: { name: true, avatar: true, phone: true } },
+      category: true,
+    },
+    orderBy: [{ avgRating: "desc" }],
+  });
   const now = new Date();
   const filtered = providers.map((p) => {
     const distance = lat && lng ? haversineDistance(lat, lng, p.latitude, p.longitude) : null;

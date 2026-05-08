@@ -86,8 +86,9 @@ function RegisterPage() {
       const firebaseToken = await result.user.getIdToken();
       const res = await axios.post("/api/auth/login", { firebaseToken, phone: result.user.phoneNumber });
       const { token, user: userData } = res.data;
+      const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
       localStorage.setItem("auth_token", token);
-      document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}`;
+      document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}; SameSite=Lax${secureFlag}`;
       setToken(token); setUser(userData); setStep("name");
     } catch (err: any) {
       console.error("Verify error:", err);
@@ -131,8 +132,9 @@ function RegisterPage() {
       const firebaseToken = await result.user.getIdToken();
       const res = await axios.post("/api/auth/google", { firebaseToken });
       const { token, user: userData } = res.data;
+      const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
       localStorage.setItem("auth_token", token);
-      document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}`;
+      document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}; SameSite=Lax${secureFlag}`;
       setToken(token);
       setUser(userData);
       // If they already have a role set, skip straight to hire/provide
@@ -158,8 +160,9 @@ function RegisterPage() {
       password: regPassword,
     });
     const { token, user: userData } = res.data;
+    const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
     localStorage.setItem("auth_token", token);
-    document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}`;
+    document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}; SameSite=Lax${secureFlag}`;
     setToken(token);
     setUser(userData);
     setStep("role");

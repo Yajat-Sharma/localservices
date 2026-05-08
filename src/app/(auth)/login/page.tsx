@@ -20,10 +20,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState("phone");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState(["","","","","",""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
   const recaptchaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,8 +35,16 @@ export default function LoginPage() {
   }, [countdown]);
 
   const saveSession = (token: string, user: any) => {
-    localStorage.setItem("auth_token", token);
-    document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}`;
+    const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
+    if (keepSignedIn) {
+      // Persist across browser restarts — 30 days
+      localStorage.setItem("auth_token", token);
+      document.cookie = `auth_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax${secureFlag}`;
+    } else {
+      // Session only — cleared when browser closes
+      sessionStorage.setItem("auth_token", token);
+      document.cookie = `auth_token=${token}; path=/; SameSite=Lax${secureFlag}`;
+    }
     setToken(token); setUser(user);
     if (user.role === "ADMIN") router.replace("/admin");
     else if (!user.name) router.replace("/register?step=name");
@@ -76,7 +85,7 @@ export default function LoginPage() {
         (window as any).recaptchaVerifier.clear();
         (window as any).recaptchaVerifier = null;
       }
-    } catch {}
+    } catch { }
     if (recaptchaRef.current) recaptchaRef.current.innerHTML = "";
   };
 
@@ -85,7 +94,7 @@ export default function LoginPage() {
     setLoading(true); clearRecaptcha();
     try {
       const verifier = new RecaptchaVerifier(auth, recaptchaRef.current!, {
-        size: "invisible", callback: () => {}, "expired-callback": () => { clearRecaptcha(); }
+        size: "invisible", callback: () => { }, "expired-callback": () => { clearRecaptcha(); }
       });
       (window as any).recaptchaVerifier = verifier;
       await verifier.render();
@@ -113,7 +122,7 @@ export default function LoginPage() {
   const handleOtpChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
     const newOtp = [...otp]; newOtp[index] = value.slice(-1); setOtp(newOtp);
-    if (value && index < 5) document.getElementById(`otp-${index+1}`)?.focus();
+    if (value && index < 5) document.getElementById(`otp-${index + 1}`)?.focus();
   };
 
   return (
@@ -126,8 +135,8 @@ export default function LoginPage() {
           <div className="w-9 h-9 rounded-2xl flex items-center justify-center"
             style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)", boxShadow: "0 4px 12px rgba(124,58,237,0.35)" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </div>
           <span className="font-black text-lg" style={{ color: "var(--text-primary)" }}>
@@ -221,19 +230,74 @@ export default function LoginPage() {
                 >
                   {showPassword ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
                     </svg>
                   ) : (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                   )}
                 </button>
               </div>
             </div>
+
+
+            {/* ── Keep me signed in ── */}
+            <button
+              type="button"
+              onClick={() => setKeepSignedIn(v => !v)}
+              className="flex items-center gap-3 group w-fit select-none"
+              aria-checked={keepSignedIn}
+              role="checkbox"
+            >
+              {/* Custom checkbox */}
+              <span
+                className="relative flex-shrink-0 w-5 h-5 rounded-md transition-all duration-200"
+                style={{
+                  border: keepSignedIn ? "none" : "1.5px solid rgba(124,58,237,0.35)",
+                  background: keepSignedIn
+                    ? "linear-gradient(135deg, #7c3aed, #ec4899)"
+                    : "var(--bg-input)",
+                  boxShadow: keepSignedIn
+                    ? "0 0 0 3px rgba(124,58,237,0.18), 0 2px 8px rgba(124,58,237,0.3)"
+                    : "none",
+                  transform: keepSignedIn ? "scale(1.08)" : "scale(1)",
+                }}
+              >
+                {/* Checkmark — fades in when checked */}
+                <svg
+                  width="11" height="11"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="absolute inset-0 m-auto transition-all duration-200"
+                  style={{
+                    opacity: keepSignedIn ? 1 : 0,
+                    transform: keepSignedIn ? "scale(1)" : "scale(0.5)",
+                  }}
+                >
+                  <polyline points="2 6 5 9 10 3" />
+                </svg>
+              </span>
+
+              {/* Label */}
+              <span className="flex items-center gap-1.5 transition-colors duration-200"
+                style={{ color: keepSignedIn ? "var(--text-secondary)" : "var(--text-muted)", fontSize: "0.8125rem", fontWeight: 500 }}>
+                {/* Shield icon */}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                  style={{ opacity: keepSignedIn ? 0.8 : 0.4, transition: "opacity 0.2s" }}>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Keep me signed in
+              </span>
+            </button>
 
             <button onClick={handleEmailLogin} disabled={loading} className="btn-primary w-full py-4 text-base">
               {loading ? (
@@ -257,7 +321,7 @@ export default function LoginPage() {
                   <div className="flex gap-2">
                     <div className="flex items-center px-4 rounded-2xl text-sm font-bold flex-shrink-0"
                       style={{ background: "var(--bg-input)", border: "1.5px solid var(--border-input)", color: "var(--text-primary)" }}>
-                      🇮🇳 +91
+                      IN +91
                     </div>
                     <input type="tel" value={phone}
                       onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
@@ -282,7 +346,7 @@ export default function LoginPage() {
                     <input key={i} id={`otp-${i}`} type="text" inputMode="numeric"
                       maxLength={1} value={digit}
                       onChange={e => handleOtpChange(i, e.target.value)}
-                      onKeyDown={e => { if (e.key === "Backspace" && !otp[i] && i > 0) document.getElementById(`otp-${i-1}`)?.focus(); }}
+                      onKeyDown={e => { if (e.key === "Backspace" && !otp[i] && i > 0) document.getElementById(`otp-${i - 1}`)?.focus(); }}
                       className="w-12 h-14 text-center text-xl font-black rounded-2xl focus:outline-none transition-all"
                       style={{
                         border: digit ? "2px solid #7c3aed" : "1.5px solid var(--border-input)",
@@ -327,10 +391,10 @@ export default function LoginPage() {
         >
           {/* Official Google G logo */}
           <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
           </svg>
           Continue with Google
         </button>

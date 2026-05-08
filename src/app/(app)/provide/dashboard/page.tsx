@@ -27,7 +27,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function ProviderDashboardPage() {
   const { t } = useLanguage();
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,8 +63,11 @@ export default function ProviderDashboardPage() {
   const active = bookings.filter(b => !["COMPLETED", "CANCELLED"].includes(b.status));
   const totalEarned = completed.reduce((sum, b) => sum + (b.price || 0), 0);
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   // Last 7 days bookings chart
-  const last7 = Array.from({ length: 7 }, (_, i) => {
+  const last7 = isMounted ? Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
     const label = d.toLocaleDateString("en-IN", { weekday: "short" });
@@ -73,7 +76,7 @@ export default function ProviderDashboardPage() {
       return bd.toDateString() === d.toDateString();
     }).length;
     return { label, count };
-  });
+  }) : [];
 
   const statusBreakdown = Object.entries(
     bookings.reduce((acc: any, b) => {

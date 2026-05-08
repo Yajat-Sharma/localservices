@@ -45,14 +45,32 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (token.length < 10) {
+  try {
+    const { verifyToken } = await import("@/lib/jwt");
+    const payload = await verifyToken(token);
+    
+    if (!payload) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Unauthorized: Invalid Token" }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    
+    // Add userId header for downstream usage
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-user-id", payload.userId as string);
+    
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  } catch (error) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized: Invalid Token" }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/login", req.url));
   }
-
-  return NextResponse.next();
 }
 
 export const config = {

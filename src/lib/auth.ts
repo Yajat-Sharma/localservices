@@ -1,12 +1,7 @@
-import { SignJWT, jwtVerify } from "jose";
+import { signToken, verifyToken } from "./jwt";
 import { prisma } from "./prisma";
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "fallback_secret_32_chars_minimum!!");
-export async function signToken(payload: Record<string, unknown>) {
-  return await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("30d").sign(SECRET);
-}
-export async function verifyToken(token: string) {
-  try { const { payload } = await jwtVerify(token, SECRET); return payload; } catch { return null; }
-}
+
+export { signToken, verifyToken };
 export function getTokenFromRequest(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) return authHeader.slice(7);

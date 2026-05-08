@@ -1,6 +1,15 @@
 "use client";
 import { create } from "zustand";
-interface User { id: string; phone: string; name?: string; email?: string; avatar?: string; role: "CUSTOMER" | "PROVIDER" | "ADMIN"; provider?: any; }
+interface ProviderInfo {
+  id: string;
+  businessName: string;
+  categoryId: string;
+  isApproved: boolean;
+  isAvailable: boolean;
+  avgRating: number;
+  totalReviews: number;
+}
+interface User { id: string; phone: string; name?: string; email?: string; avatar?: string; role: "CUSTOMER" | "PROVIDER" | "ADMIN"; originalRole?: string; provider?: ProviderInfo; }
 interface AuthStore { user: User | null; token: string | null; isLoading: boolean; setUser: (user: User | null) => void; setToken: (token: string | null) => void; setLoading: (loading: boolean) => void; logout: () => void; }
 export const useAuthStore = create<AuthStore>((set) => ({
   user: null, token: null, isLoading: true,

@@ -43,6 +43,7 @@ export default function ChatPage() {
       if (booking) {
         setBookingId(booking.id);
         loadMessages(booking.id, token!);
+        if (pollRef.current) clearInterval(pollRef.current);
         pollRef.current = setInterval(() => loadMessages(booking.id, token!), 5000);
       }
     } catch {
@@ -96,8 +97,16 @@ export default function ChatPage() {
         <>
           <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
             {loading ? (
-              <div className="flex justify-center pt-8">
-                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="space-y-4 pt-4 animate-pulse">
+                <div className="flex justify-start">
+                  <div className="w-48 h-12 bg-gray-200 dark:bg-slate-800 rounded-2xl rounded-bl-sm" />
+                </div>
+                <div className="flex justify-end">
+                  <div className="w-32 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-2xl rounded-br-sm" />
+                </div>
+                <div className="flex justify-start">
+                  <div className="w-40 h-16 bg-gray-200 dark:bg-slate-800 rounded-2xl rounded-bl-sm" />
+                </div>
               </div>
             ) : messages.length === 0 ? (
               <div className="text-center pt-12 text-sm text-gray-400">No messages yet. Say hello!</div>
