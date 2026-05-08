@@ -159,14 +159,6 @@ export default function ProviderProfilePage() {
                   <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                     {provider.businessName}
                   </h1>
-                  {provider.isVerified && (
-                    <span className="verified-badge flex items-center gap-1">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                      Verified
-                    </span>
-                  )}
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                   {language === "hi" ? provider.category.nameHi : provider.category.name}
@@ -182,15 +174,42 @@ export default function ProviderProfilePage() {
               </span>
             </div>
 
+            </div>
+
+            {/* Trust Badges Panel */}
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+              {provider.isVerified && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Verified
+                </span>
+              )}
+              {(provider.totalBookings || 0) > 0 && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300">
+                  <span>🏆</span> {provider.totalBookings} Jobs Done
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
+                <span>⚡</span> Fast Responder
+              </span>
+              {provider.address && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                  <span>🏘️</span> {provider.address.split(",")[0].trim()}
+                </span>
+              )}
+            </div>
+
             {/* Rating & Distance */}
-            <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-4 mt-4">
               <div className="flex items-center gap-1.5">
                 <StarRating value={provider.avgRating} readonly size="sm" />
                 <span className="text-sm font-bold text-amber-600">{provider.avgRating.toFixed(1)}</span>
                 <span className="text-xs text-gray-400">({provider.totalReviews})</span>
               </div>
               {provider.distance !== undefined && (
-                <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded-full">
+                <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/5 px-2 py-1 rounded-full">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <circle cx="12" cy="10" r="3"/>
                     <path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/>
@@ -262,16 +281,16 @@ export default function ProviderProfilePage() {
 
           {provider.whatsapp && (
             <a
-              href={`https://wa.me/${provider.whatsapp.replace(/\D/g, "")}`}
+              href={`https://wa.me/${provider.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${provider.businessName}, I found your profile on LocalServices and would like to inquire about your services.`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-center gap-2.5 w-full py-3 rounded-2xl font-semibold text-sm text-white transition-all"
+              className="mt-3 flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all active:scale-95 shadow-lg shadow-green-500/20 hover:shadow-green-500/40"
               style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.768.967-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.762-1.653-2.06-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.52-.075-.149-.669-1.611-.916-2.207-.242-.579-.487-.5-.67-.51l-.57-.01c-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.077 4.487.71.306 1.263.489 1.695.626.712.227 1.36.195 1.872.118.571-.085 1.758-.718 2.006-1.412.248-.694.248-1.29.173-1.412-.074-.124-.272-.198-.57-.347z"/>
               </svg>
-              WhatsApp
+              Chat on WhatsApp
             </a>
           )}
         </div>
