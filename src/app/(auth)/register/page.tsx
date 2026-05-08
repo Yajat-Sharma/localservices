@@ -109,7 +109,7 @@ function RegisterPage() {
 
   const handleRoleSelect = async (role: string) => {
     setLoading(true);
-    const token = localStorage.getItem("auth_token");
+    const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
     try {
       const res = await axios.patch("/api/auth/me", { role }, { headers: { Authorization: `Bearer ${token}` } });
       setUser(res.data.user);
@@ -131,16 +131,20 @@ function RegisterPage() {
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseToken = await result.user.getIdToken();
       const res = await axios.post("/api/auth/google", { firebaseToken });
-      const { token, user: userData } = res.data;
+      const { token, user: userData, isNewUser } = res.data;
       const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
       localStorage.setItem("auth_token", token);
       document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}; SameSite=Lax${secureFlag}`;
       setToken(token);
       setUser(userData);
-      // If they already have a role set, skip straight to hire/provide
-      if (userData.role === "PROVIDER") router.replace("/provide/dashboard");
-      else if (userData.role === "CUSTOMER") router.replace("/hire");
-      else setStep("role"); // new user — pick a role
+      
+      if (isNewUser) {
+        setStep("role");
+      } else if (userData.role === "PROVIDER") {
+        router.replace("/provide/dashboard");
+      } else {
+        router.replace("/hire");
+      }
       toast.success("Welcome to LocalServices!");
     } catch (err: any) {
       if (err.code !== "auth/popup-closed-by-user") {

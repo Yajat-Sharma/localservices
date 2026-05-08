@@ -25,8 +25,10 @@ export async function POST(req: NextRequest) {
 
     const isAdmin = email === ADMIN_EMAIL;
 
-    // Find or create the user — prefer matching by email, fall back to creating
-    let user = await prisma.user.findUnique({
+    let user;
+    let isNewUser = false;
+    
+    user = await prisma.user.findUnique({
       where: { email },
       include: { provider: { include: { category: true } } },
     });
@@ -43,6 +45,7 @@ export async function POST(req: NextRequest) {
         },
         include: { provider: { include: { category: true } } },
       });
+      isNewUser = true;
     } else {
       // Existing user — update avatar/name from Google if they were empty
       // Also enforce ADMIN role if this is the admin email
@@ -65,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     const token = await signToken({ userId: user.id, role: user.role });
-    return NextResponse.json({ token, user });
+    return NextResponse.json({ token, user, isNewUser });
   } catch (err) {
     console.error("Google auth error:", err);
     return NextResponse.json({ error: "Google authentication failed" }, { status: 401 });

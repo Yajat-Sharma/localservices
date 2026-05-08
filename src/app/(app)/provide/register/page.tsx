@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 export default function ProviderRegisterPage() {
   const { t } = useLanguage();
   const router = useRouter();
-  const { user, setUser } = useAuthStore();
+  const { user, setUser, isLoading } = useAuthStore();
   const { latitude, longitude, setLocation } = useLocationStore();
   const [categories, setCategories] = useState<any[]>([]);
   const [freeSlots, setFreeSlots] = useState(50);
@@ -18,11 +18,12 @@ export default function ProviderRegisterPage() {
   const [form, setForm] = useState({ businessName:"", categoryId:"", description:"", priceMin:"", priceMax:"", address:"", city:"", state:"", pincode:"", whatsapp:"", allowMultiple:false });
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.replace("/login"); return; }
     if (user.provider) { router.replace("/provide/dashboard"); return; }
     axios.get("/api/categories").then(res => { setCategories(res.data.categories); setFreeSlots(res.data.freeSlots || 50); });
     navigator.geolocation?.getCurrentPosition((pos) => setLocation(pos.coords.latitude, pos.coords.longitude), () => {});
-  }, [user]);
+  }, [user, isLoading]);
 
   const handleSubmit = async () => {
     if (!form.businessName.trim()) return toast.error("Business name required");
