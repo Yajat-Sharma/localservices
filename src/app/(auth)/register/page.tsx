@@ -10,6 +10,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 function RegisterPage() {
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [regMethod, setRegMethod] = useState<"email" | "phone">("email");
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
@@ -108,14 +109,27 @@ function RegisterPage() {
   };
 
   const handleRoleSelect = async (role: string) => {
+    setSelectedRole(role);
     setLoading(true);
     const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+    if (!token) {
+      toast.error("Session expired. Please log in again.");
+      router.replace("/login");
+      setLoading(false);
+      setSelectedRole(null);
+      return;
+    }
     try {
       const res = await axios.patch("/api/auth/me", { role }, { headers: { Authorization: `Bearer ${token}` } });
       setUser(res.data.user);
+      toast.success(role === "PROVIDER" ? "Welcome, Provider! Let's set up your profile." : "Welcome! Let's find you great services.");
       if (role === "PROVIDER") router.replace("/provide/register");
       else router.replace("/hire");
-    } catch { toast.error("Failed to set role"); }
+    } catch (err: any) {
+      console.error("Role select error:", err);
+      toast.error(err.response?.data?.error || "Failed to set role. Please try again.");
+      setSelectedRole(null);
+    }
     finally { setLoading(false); }
   };
 
@@ -177,7 +191,7 @@ function RegisterPage() {
 };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       <div ref={recaptchaContainerRef} id="recaptcha-container" style={{ display: "none" }} />
       <header className="flex items-center justify-between px-6 py-5">
         <Link href="/" className="flex items-center gap-2">
@@ -295,18 +309,61 @@ function RegisterPage() {
         )}
         {step === "role" && (
           <>
-            <h1 className="text-2xl font-bold mb-2">{t("choose_role")}</h1>
-            <p className="text-gray-500 text-sm mb-8">Choose how you want to use LocalServices</p>
+            <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>{t("choose_role")}</h1>
+            <p className="text-sm mb-8" style={{ color: "var(--text-secondary)" }}>Choose how you want to use LocalServices</p>
             <div className="space-y-4">
-              <button onClick={() => handleRoleSelect("CUSTOMER")} disabled={loading} className="w-full p-5 border-2 border-gray-200 rounded-3xl text-left hover:border-blue-400 hover:bg-blue-50 transition-all group">
-                <div className="text-3xl mb-2">🛒</div>
-                <div className="font-bold text-gray-900 group-hover:text-blue-700">{t("i_want_to_hire")}</div>
-                <div className="text-sm text-gray-500 mt-1">Find and hire local service providers</div>
+              {/* Customer Card */}
+              <button
+                onClick={() => handleRoleSelect("CUSTOMER")}
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "20px",
+                  borderRadius: "var(--radius-xl)",
+                  textAlign: "left",
+                  border: selectedRole === "CUSTOMER" ? "2px solid var(--primary)" : "2px solid var(--border)",
+                  background: selectedRole === "CUSTOMER" ? "var(--bg-subtle)" : "var(--bg-card)",
+                  boxShadow: selectedRole === "CUSTOMER" ? "var(--shadow-md)" : "var(--shadow-xs)",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  opacity: loading && selectedRole !== "CUSTOMER" ? 0.5 : 1,
+                  transition: "all 0.2s ease",
+                  display: "block",
+                }}
+              >
+                <div style={{ fontSize: "2rem", marginBottom: "8px" }}>
+                  {selectedRole === "CUSTOMER" && loading ? (
+                    <div style={{ width: "32px", height: "32px", border: "3px solid var(--primary)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} />
+                  ) : "🛒"}
+                </div>
+                <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1rem" }}>{t("i_want_to_hire")}</div>
+                <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginTop: "4px" }}>Find and hire local service providers</div>
               </button>
-              <button onClick={() => handleRoleSelect("PROVIDER")} disabled={loading} className="w-full p-5 border-2 border-gray-200 rounded-3xl text-left hover:border-blue-400 hover:bg-blue-50 transition-all group">
-                <div className="text-3xl mb-2">💼</div>
-                <div className="font-bold text-gray-900 group-hover:text-blue-700">{t("i_want_to_provide")}</div>
-                <div className="text-sm text-gray-500 mt-1">List your services and grow your business</div>
+
+              {/* Provider Card */}
+              <button
+                onClick={() => handleRoleSelect("PROVIDER")}
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "20px",
+                  borderRadius: "var(--radius-xl)",
+                  textAlign: "left",
+                  border: selectedRole === "PROVIDER" ? "2px solid var(--primary)" : "2px solid var(--border)",
+                  background: selectedRole === "PROVIDER" ? "var(--bg-subtle)" : "var(--bg-card)",
+                  boxShadow: selectedRole === "PROVIDER" ? "var(--shadow-md)" : "var(--shadow-xs)",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  opacity: loading && selectedRole !== "PROVIDER" ? 0.5 : 1,
+                  transition: "all 0.2s ease",
+                  display: "block",
+                }}
+              >
+                <div style={{ fontSize: "2rem", marginBottom: "8px" }}>
+                  {selectedRole === "PROVIDER" && loading ? (
+                    <div style={{ width: "32px", height: "32px", border: "3px solid var(--primary)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} />
+                  ) : "💼"}
+                </div>
+                <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "1rem" }}>{t("i_want_to_provide")}</div>
+                <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginTop: "4px" }}>List your services and grow your business</div>
               </button>
             </div>
           </>

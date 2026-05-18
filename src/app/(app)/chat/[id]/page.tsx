@@ -7,15 +7,14 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 export default function ChatPage() {
-  const { providerId } = useParams<{ providerId: string }>();
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, isLoading } = useAuthStore();
   const [messages, setMessages] = useState<any[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [bookingId, setBookingId] = useState<string | null>(null);
-  const [providerName, setProviderName] = useState("Provider");
+  const [booking, setBooking] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<any>();
 
@@ -24,7 +23,7 @@ export default function ChatPage() {
     if (!user) { router.replace("/login"); return; }
     initChat();
     return () => clearInterval(pollRef.current);
-  }, [user, isLoading]);
+  }, [id, user, isLoading]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,19 +32,15 @@ export default function ChatPage() {
   const initChat = async () => {
     const token = localStorage.getItem("auth_token");
     try {
-      const pRes = await axios.get(`/api/providers/${providerId}`);
-      setProviderName(pRes.data.provider.businessName);
       const bRes = await axios.get("/api/bookings", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const booking = bRes.data.bookings.find(
-        (b: any) => b.providerId === providerId || b.provider?.id === providerId
-      );
-      if (booking) {
-        setBookingId(booking.id);
-        loadMessages(booking.id, token!);
+      const found = bRes.data.bookings.find((b: any) => b.id === id);
+      setBooking(found || null);
+      if (found) {
+        loadMessages(token!);
         if (pollRef.current) clearInterval(pollRef.current);
-        pollRef.current = setInterval(() => loadMessages(booking.id, token!), 5000);
+        pollRef.current = setInterval(() => loadMessages(token!), 5000);
       }
     } catch {
       toast.error("Failed to load chat");
@@ -54,26 +49,26 @@ export default function ChatPage() {
     }
   };
 
-  const loadMessages = async (bid: string, token: string) => {
+  const loadMessages = async (token: string) => {
     try {
-      const res = await axios.get(`/api/bookings/${bid}/messages`, {
+      const res = await axios.get(`/api/bookings/${id}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessages(res.data.messages);
-    } catch {}
+    } catch { }
   };
 
   const sendMessage = async () => {
-    if (!newMsg.trim() || !bookingId) return;
+    if (!newMsg.trim() || !id) return;
     setSending(true);
     const token = localStorage.getItem("auth_token");
     const msg = newMsg.trim();
     setNewMsg("");
     try {
-      await axios.post(`/api/bookings/${bookingId}/messages`, { content: msg }, {
+      await axios.post(`/api/bookings/${id}/messages`, { content: msg }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      loadMessages(bookingId, token!);
+      loadMessages(token!);
     } catch {
       toast.error("Failed to send");
       setNewMsg(msg);
@@ -82,43 +77,65 @@ export default function ChatPage() {
     }
   };
 
+  const isProvider = user?.role === "PROVIDER";
+  const chatName = isProvider
+    ? (booking?.customer?.name || "Customer")
+    : (booking?.provider?.businessName || "Provider");
+
+  const chatSubtitle = booking
+    ? `Booking · ${new Date(booking.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`
+    : "";
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <TopNav showBack onBack={() => router.back()} title={providerName} />
-      {!bookingId && !loading ? (
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
+      <TopNav showBack onBack={() => router.back()} title={chatName} subtitle={chatSubtitle} />
+
+      {!booking && !loading ? (
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div>
             <div className="text-5xl mb-3">💬</div>
-            <p className="font-semibold text-gray-700">No active booking found</p>
-            <p className="text-sm text-gray-500 mt-1">Book a service to start chatting</p>
+            <p className="font-semibold" style={{ color: "var(--text-primary)" }}>Booking not found</p>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>This chat session doesn't exist or you don't have access</p>
             <button onClick={() => router.back()} className="mt-4 btn-primary px-6">Go Back</button>
           </div>
         </div>
       ) : (
         <>
+          {/* Booking context banner */}
+          {booking && (
+            <div className="px-4 py-2 text-xs font-semibold text-center"
+              style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.06), rgba(236,72,153,0.04))", color: "var(--text-muted)", borderBottom: "1px solid var(--border)" }}>
+              {booking.provider?.category?.icon} {booking.problem?.slice(0, 60)}{(booking.problem?.length > 60) ? "…" : ""}
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
             {loading ? (
               <div className="space-y-4 pt-4 animate-pulse">
                 <div className="flex justify-start">
-                  <div className="w-48 h-12 bg-gray-200 dark:bg-slate-800 rounded-2xl rounded-bl-sm" />
+                  <div className="w-48 h-12 rounded-2xl rounded-bl-sm" style={{ background: "var(--bg-subtle)" }} />
                 </div>
                 <div className="flex justify-end">
-                  <div className="w-32 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-2xl rounded-br-sm" />
+                  <div className="w-32 h-10 rounded-2xl rounded-br-sm" style={{ background: "rgba(124,58,237,0.1)" }} />
                 </div>
                 <div className="flex justify-start">
-                  <div className="w-40 h-16 bg-gray-200 dark:bg-slate-800 rounded-2xl rounded-bl-sm" />
+                  <div className="w-40 h-16 rounded-2xl rounded-bl-sm" style={{ background: "var(--bg-subtle)" }} />
                 </div>
               </div>
             ) : messages.length === 0 ? (
-              <div className="text-center pt-12 text-sm text-gray-400">No messages yet. Say hello!</div>
+              <div className="text-center pt-12 text-sm" style={{ color: "var(--text-muted)" }}>No messages yet. Say hello! 👋</div>
             ) : (
               messages.map((msg: any) => {
                 const isMe = msg.senderId === user?.id;
                 return (
                   <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-xs rounded-2xl px-4 py-2.5 ${isMe ? "bg-blue-500 text-white rounded-br-sm" : "bg-white text-gray-900 rounded-bl-sm shadow-sm"}`}>
+                    <div className={`max-w-xs rounded-2xl px-4 py-2.5 ${isMe ? "rounded-br-sm" : "rounded-bl-sm"}`}
+                      style={isMe
+                        ? { background: "linear-gradient(135deg, #7c3aed, #ec4899)", color: "white" }
+                        : { background: "var(--bg-card)", color: "var(--text-primary)", boxShadow: "var(--shadow-xs)", border: "1px solid var(--border)" }
+                      }>
                       <p className="text-sm leading-relaxed">{msg.content}</p>
-                      <p className={`text-xs mt-1 ${isMe ? "text-blue-200" : "text-gray-400"}`}>
+                      <p className="text-xs mt-1" style={{ color: isMe ? "rgba(255,255,255,0.65)" : "var(--text-muted)" }}>
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
@@ -128,7 +145,9 @@ export default function ChatPage() {
             )}
             <div ref={messagesEndRef} />
           </div>
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3">
+
+          <div className="fixed bottom-0 left-0 right-0 p-3 border-t"
+            style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -141,9 +160,15 @@ export default function ChatPage() {
               <button
                 onClick={sendMessage}
                 disabled={sending || !newMsg.trim()}
-                className="w-11 h-11 bg-blue-500 text-white rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-colors disabled:opacity-50"
+                className="w-11 h-11 text-white rounded-2xl flex items-center justify-center transition-all disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)" }}
               >
-                {sending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "→"}
+                {sending
+                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                }
               </button>
             </div>
           </div>
