@@ -174,8 +174,6 @@ export default function ProviderProfilePage() {
               </span>
             </div>
 
-            </div>
-
             {/* Trust Badges Panel */}
             <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
               {provider.isVerified && (
