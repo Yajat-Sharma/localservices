@@ -9,8 +9,8 @@ const nextConfig = {
     ],
   },
 
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: false },
+  typescript: { ignoreBuildErrors: false },
   staticPageGenerationTimeout: 300,
 
   // Next 15: serverExternalPackages is now a top-level key

@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 
 export default function BookingsPage() {
   const { t } = useLanguage();
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ export default function BookingsPage() {
     if (isLoading) return;
     if (!user) { router.replace("/login"); return; }
     fetchBookings();
-  }, [user, isLoading]);
+  }, [user, isLoading, router]);
 
   const fetchBookings = async () => {
     const token = localStorage.getItem("auth_token");

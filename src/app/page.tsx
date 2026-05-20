@@ -264,7 +264,7 @@ export default function LandingPage() {
               {"⭐".repeat(TESTIMONIALS[activeTestimonial].rating)}
             </div>
             <p className="text-lg leading-relaxed mb-6 font-medium" style={{ color: "var(--text-primary)" }}>
-              "{TESTIMONIALS[activeTestimonial].text}"
+              &ldquo;{TESTIMONIALS[activeTestimonial].text}&rdquo;
             </p>
             <div className="flex items-center justify-center gap-3">
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"

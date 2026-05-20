@@ -400,7 +400,7 @@ export default function LoginPage() {
         </button>
 
         <p className="text-center mt-6 text-sm" style={{ color: "var(--text-secondary)" }}>
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/register" className="font-bold gradient-text">
             {t("signup")}
           </Link>

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { TopNav } from "@/components/shared/TopNav";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
@@ -38,7 +39,7 @@ export default function AdminPage() {
     if (!user) { router.replace("/login"); return; }
     if (user.role !== "ADMIN") { router.replace("/hire"); return; }
     fetchData();
-  }, [user]);
+  }, [user, router]);
 
   useEffect(() => {
     if (tab === "analytics") fetchAnalytics(dateRange);
@@ -287,7 +288,7 @@ export default function AdminPage() {
                   <ResponsiveContainer width="50%" height={180}>
                     <PieChart>
                       <Pie data={categoryData} cx="50%" cy="50%" outerRadius={70} dataKey="value"
-                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                        label={({ percent }) => typeof percent === "number" ? `${(percent * 100).toFixed(0)}%` : ""} labelLine={false}>
                         {categoryData.map((_: any, index: number) => (
                           <Cell key={index} fill={COLORS[index % COLORS.length]} />
                         ))}
@@ -419,7 +420,7 @@ export default function AdminPage() {
                         <Tooltip
                           contentStyle={{ background: "#1e293b", border: "none", borderRadius: "12px", fontSize: "12px" }}
                           labelStyle={{ color: "#94a3b8" }}
-                          formatter={(value: any, name: string) => [
+                          formatter={(value: any, name?: any) => [
                             name === "revenue" ? `₹${Number(value).toLocaleString("en-IN")}` : value,
                             name === "revenue" ? "Revenue" : "Bookings",
                           ]}
@@ -713,7 +714,7 @@ export default function AdminPage() {
                         </div>
                         <a href={viewingProvider.idProofUrl} target="_blank" rel="noopener noreferrer" className="block">
                           <div className="relative h-36 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700 hover:opacity-90 transition-opacity">
-                            <img src={viewingProvider.idProofUrl} alt="ID Proof" className="w-full h-full object-cover" />
+                            <Image src={viewingProvider.idProofUrl} alt="ID Proof" fill className="object-cover" sizes="384px" />
                           </div>
                         </a>
                         {viewingProvider.idProofStatus === "PENDING" && (
@@ -737,7 +738,7 @@ export default function AdminPage() {
                         </div>
                         <a href={viewingProvider.licenseUrl} target="_blank" rel="noopener noreferrer" className="block">
                           <div className="relative h-36 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700 hover:opacity-90 transition-opacity">
-                            <img src={viewingProvider.licenseUrl} alt="License" className="w-full h-full object-cover" />
+                            <Image src={viewingProvider.licenseUrl} alt="License" fill className="object-cover" sizes="384px" />
                           </div>
                         </a>
                         {viewingProvider.licenseStatus === "PENDING" && (
@@ -764,8 +765,8 @@ export default function AdminPage() {
                   <div className="grid grid-cols-3 gap-2">
                     {viewingProvider.portfolio.map((url: string, i: number) => (
                       <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                        <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700">
-                          <img src={url} alt={`Portfolio ${i}`} className="w-full h-full object-cover hover:opacity-90 transition-opacity" />
+                        <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700">
+                          <Image src={url} alt={`Portfolio ${i}`} fill className="object-cover hover:opacity-90 transition-opacity" sizes="256px" />
                         </div>
                       </a>
                     ))}

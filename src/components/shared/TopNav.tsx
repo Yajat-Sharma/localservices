@@ -10,6 +10,7 @@ import axios from "axios";
 
 interface TopNavProps {
   title?: string;
+  subtitle?: string;
   showBack?: boolean;
   onBack?: () => void;
   showSearch?: boolean;
@@ -18,7 +19,7 @@ interface TopNavProps {
   rightElement?: React.ReactNode;
 }
 
-export function TopNav({ title, showBack, onBack, showSearch, searchValue, onSearch, rightElement }: TopNavProps) {
+export function TopNav({ title, subtitle, showBack, onBack, showSearch, searchValue, onSearch, rightElement }: TopNavProps) {
   const { t } = useLanguage();
   const { user, setUser, setToken } = useAuthStore();
   const router = useRouter();
@@ -83,6 +84,11 @@ export function TopNav({ title, showBack, onBack, showSearch, searchValue, onSea
                 <h1 className="font-black text-lg tracking-tight" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
                   {title}
                 </h1>
+              )}
+              {subtitle && (
+                <p className="text-[10px] font-bold tracking-wide uppercase mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {subtitle}
+                </p>
               )}
             </div>
           )}

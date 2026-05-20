@@ -16,7 +16,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [booking, setBooking] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<any>();
+  const pollRef = useRef<any>(null);
 
   useEffect(() => {
     if (isLoading) return;
@@ -95,7 +95,7 @@ export default function ChatPage() {
           <div>
             <div className="text-5xl mb-3">💬</div>
             <p className="font-semibold" style={{ color: "var(--text-primary)" }}>Booking not found</p>
-            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>This chat session doesn't exist or you don't have access</p>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>This chat session doesn&apos;t exist or you don&apos;t have access</p>
             <button onClick={() => router.back()} className="mt-4 btn-primary px-6">Go Back</button>
           </div>
         </div>
