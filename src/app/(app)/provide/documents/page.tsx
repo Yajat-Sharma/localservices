@@ -21,7 +21,7 @@ export default function DocumentsPage() {
     if (!user) { router.replace("/login"); return; }
     if (!user.provider) { router.replace("/provide/register"); return; }
     fetchProvider();
-  }, [user]);
+  }, [user, router]);
 
   const fetchProvider = async () => {
     const token = localStorage.getItem("auth_token");

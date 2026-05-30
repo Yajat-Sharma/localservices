@@ -16,7 +16,7 @@ export default function EarningsPage() {
     if (!user) { router.replace("/login"); return; }
     if (!user.provider) { router.replace("/provide/register"); return; }
     fetchBookings();
-  }, [user]);
+  }, [user, router]);
 
   const fetchBookings = async () => {
     const token = localStorage.getItem("auth_token");

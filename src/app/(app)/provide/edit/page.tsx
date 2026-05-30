@@ -37,7 +37,7 @@ export default function ProviderEditPage() {
       allowMultiple: p.allowMultiple || false,
       workingHours: p.workingHours || { startHour: 8, endHour: 18, days: [1,2,3,4,5,6] },
     });
-  }, [user]);
+  }, [user, router]);
 
   const handleSave = async () => {
     if (!form.priceMin || !form.priceMax) {

@@ -23,7 +23,7 @@ export default function ProviderRegisterPage() {
     if (user.provider) { router.replace("/provide/dashboard"); return; }
     axios.get("/api/categories").then(res => { setCategories(res.data.categories); setFreeSlots(res.data.freeSlots || 50); });
     navigator.geolocation?.getCurrentPosition((pos) => setLocation(pos.coords.latitude, pos.coords.longitude), () => {});
-  }, [user, isLoading]);
+  }, [user, isLoading, router, setLocation]);
 
   const handleSubmit = async () => {
     if (!form.businessName.trim()) return toast.error("Business name required");

@@ -20,7 +20,7 @@ export default function PortfolioPage() {
     if (!user) { router.replace("/login"); return; }
     if (!user.provider) { router.replace("/provide/register"); return; }
     fetchPortfolio();
-  }, [user]);
+  }, [user, router]);
 
   const fetchPortfolio = async () => {
     const token = localStorage.getItem("auth_token");

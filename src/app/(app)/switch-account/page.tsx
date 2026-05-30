@@ -26,7 +26,7 @@ export default function SwitchAccountPage() {
     if (!user) { router.replace("/login"); return; }
     fetchCategories();
     checkProviderStatus();
-  }, [user]);
+  }, [user, router]);
 
   const fetchCategories = async () => {
     const res = await axios.get("/api/categories");

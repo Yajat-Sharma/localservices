@@ -32,22 +32,24 @@ export default function HirePage() {
     sortBy: "distance",
   });
 
-  useEffect(() => { fetchCategories(); getUserLocation(); }, []);
-  useEffect(() => { if (latitude && longitude) fetchProviders(); }, [latitude, longitude, selectedCategory]);
-
-  const getUserLocation = () => {
+  const getUserLocation = useCallback(() => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => setLocation(pos.coords.latitude, pos.coords.longitude),
       () => setLocation(19.0760, 72.8777, "Mumbai")
     );
-  };
+  }, [setLocation]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await axios.get("/api/categories");
       setCategories(res.data.categories);
     } catch {}
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+    getUserLocation();
+  }, [fetchCategories, getUserLocation]);
 
   const fetchProviders = useCallback(async () => {
     if (!latitude || !longitude) return;
@@ -82,9 +84,13 @@ export default function HirePage() {
   }, [latitude, longitude, selectedCategory, searchQuery, filters]);
 
   useEffect(() => {
+    if (latitude && longitude) fetchProviders();
+  }, [latitude, longitude, selectedCategory, fetchProviders]);
+
+  useEffect(() => {
     const d = setTimeout(() => { if (latitude && longitude) fetchProviders(); }, 400);
     return () => clearTimeout(d);
-  }, [searchQuery, fetchProviders]);
+  }, [searchQuery, fetchProviders, latitude, longitude]);
 
   const startVoiceSearch = () => {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TopNav } from "@/components/shared/TopNav";
 import { useAuthStore } from "@/lib/store";
@@ -18,18 +18,16 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<any>(null);
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (!user) { router.replace("/login"); return; }
-    initChat();
-    return () => clearInterval(pollRef.current);
-  }, [id, user, isLoading]);
+  const loadMessages = useCallback(async (token: string) => {
+    try {
+      const res = await axios.get(`/api/bookings/${id}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMessages(res.data.messages);
+    } catch { }
+  }, [id]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const initChat = async () => {
+  const initChat = useCallback(async () => {
     const token = localStorage.getItem("auth_token");
     try {
       const bRes = await axios.get("/api/bookings", {
@@ -47,16 +45,18 @@ export default function ChatPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, loadMessages]);
 
-  const loadMessages = async (token: string) => {
-    try {
-      const res = await axios.get(`/api/bookings/${id}/messages`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMessages(res.data.messages);
-    } catch { }
-  };
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) { router.replace("/login"); return; }
+    initChat();
+    return () => clearInterval(pollRef.current);
+  }, [id, user, isLoading, initChat, router]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!newMsg.trim() || !id) return;

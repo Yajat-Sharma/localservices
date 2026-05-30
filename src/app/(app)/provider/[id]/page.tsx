@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { TopNav } from "@/components/shared/TopNav";
@@ -52,9 +52,7 @@ export default function ProviderProfilePage() {
     return (wh.days as number[]).includes(dayOfWeek);
   };
 
-  useEffect(() => { fetchProvider(); }, [id]);
-
-  const fetchProvider = async () => {
+  const fetchProvider = useCallback(async () => {
     try {
       const params: any = {};
       if (latitude && longitude) { params.lat = latitude; params.lng = longitude; }
@@ -67,7 +65,9 @@ export default function ProviderProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, latitude, longitude, router]);
+
+  useEffect(() => { fetchProvider(); }, [fetchProvider]);
 
   const handleBook = async () => {
     if (!problem.trim()) { toast.error("Please describe your problem"); return; }

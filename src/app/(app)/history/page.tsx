@@ -20,7 +20,7 @@ export default function HistoryPage() {
     axios.get("/api/bookings", { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setBookings(res.data.bookings.filter((b: any) => ["COMPLETED","CANCELLED"].includes(b.status))))
       .finally(() => setLoading(false));
-  }, [user, isLoading]);
+  }, [user, isLoading, router]);
 
   return (
     <div className="min-h-screen bg-gray-50">

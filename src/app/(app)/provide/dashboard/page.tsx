@@ -38,7 +38,7 @@ export default function ProviderDashboardPage() {
     if (!user) { router.replace("/login"); return; }
     if (user.role !== "PROVIDER") { router.replace("/hire"); return; }
     fetchData();
-  }, [user, isLoading]);
+  }, [user, isLoading, router]);
 
   const fetchData = async () => {
     const token = localStorage.getItem("auth_token");
