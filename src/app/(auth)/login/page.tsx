@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { auth, RecaptchaVerifier, signInWithPhoneNumber, googleProvider, signInWithPopup } from "@/lib/firebase";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -13,6 +13,8 @@ import toast from "react-hot-toast";
 export default function LoginPage() {
   const { t } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromPath = searchParams.get("from");
   const { setUser, setToken } = useAuthStore();
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
@@ -46,6 +48,9 @@ export default function LoginPage() {
       document.cookie = `auth_token=${token}; path=/; SameSite=Lax${secureFlag}`;
     }
     setToken(token); setUser(user);
+    // If user came from a specific page (e.g. provider profile), return them there
+    const destination = fromPath && fromPath.startsWith("/") ? fromPath : null;
+    if (destination) { router.replace(destination); return; }
     if (user.role === "ADMIN") router.replace("/admin");
     else if (!user.name) router.replace("/register?step=name");
     else if (user.role === "PROVIDER") router.replace("/provide/dashboard");

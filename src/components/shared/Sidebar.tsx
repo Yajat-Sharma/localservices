@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -51,7 +52,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { href: "/switch-account", label: "Switch Account", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg> },
   ];
 
-  const links = user?.role === "ADMIN" ? adminLinks : user?.role === "PROVIDER" ? providerLinks : customerLinks;
+  const guestLinks = [
+    { href: "/hire", label: "Find Services", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> },
+  ];
+
+  const links = !user ? guestLinks : user?.role === "ADMIN" ? adminLinks : user?.role === "PROVIDER" ? providerLinks : customerLinks;
 
   const NavLink = ({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) => {
     const active = pathname === href || pathname.startsWith(href + "/");
@@ -121,8 +126,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </button>
           </div>
 
-          {/* User Card */}
-          {user && (
+          {/* User Card or Guest Banner */}
+          {user ? (
             <div className="flex items-center gap-3 p-3 rounded-2xl"
               style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.06), rgba(236,72,153,0.04))", border: "1px solid rgba(124,58,237,0.1)" }}>
               <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0"
@@ -141,6 +146,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <span className="text-xs font-bold gradient-text">{user.role}</span>
               </div>
             </div>
+          ) : (
+            /* Guest banner */
+            <div className="p-3 rounded-2xl"
+              style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.06), rgba(236,72,153,0.04))", border: "1px solid rgba(124,58,237,0.12)" }}>
+              <p className="text-xs font-semibold mb-2.5" style={{ color: "var(--text-muted)" }}>You&apos;re browsing as a guest</p>
+              <div className="flex gap-2">
+                <Link href="/login" onClick={onClose}
+                  className="flex-1 text-center text-xs font-bold py-2 rounded-xl transition-all"
+                  style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)", color: "white" }}>
+                  Sign In
+                </Link>
+                <Link href="/register" onClick={onClose}
+                  className="flex-1 text-center text-xs font-bold py-2 rounded-xl transition-all"
+                  style={{ background: "rgba(124,58,237,0.08)", color: "var(--primary)", border: "1px solid rgba(124,58,237,0.2)" }}>
+                  Register
+                </Link>
+              </div>
+            </div>
           )}
         </div>
 
@@ -148,9 +171,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
           {links.map(link => <NavLink key={link.href} {...link} />)}
 
-          <div className="pt-3 mt-3 border-t space-y-1" style={{ borderColor: "var(--border)" }}>
-            {bottomLinks.map(link => <NavLink key={link.href} {...link} />)}
-          </div>
+          {user && (
+            <div className="pt-3 mt-3 border-t space-y-1" style={{ borderColor: "var(--border)" }}>
+              {bottomLinks.map(link => <NavLink key={link.href} {...link} />)}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -159,18 +184,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>Theme</span>
             <ThemeToggle />
           </div>
-          <button
-            onClick={() => { logout(); router.replace("/"); onClose(); }}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold transition-all"
-            style={{ background: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.15)" }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            {t("logout")}
-          </button>
+          {user && (
+            <button
+              onClick={() => { logout(); router.replace("/"); onClose(); }}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold transition-all"
+              style={{ background: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.15)" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              {t("logout")}
+            </button>
+          )}
         </div>
       </div>
     </>

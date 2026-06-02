@@ -245,10 +245,17 @@ export default function HirePage() {
     style={{ background: "#f472b6" }} />
 
   <div className="relative">
-    <p className="text-purple-200 text-sm font-medium mb-1">Hello 👋</p>
+    <p className="text-purple-200 text-sm font-medium mb-1">
+      {user ? "Hello 👋" : "Welcome 👋"}
+    </p>
     <h2 className="text-white font-black text-2xl leading-tight tracking-tight mb-4">
-      {user?.name?.split(" ")[0] || "there"},<br />
-      <span className="text-purple-200">what do you need today?</span>
+      {user ? (
+        <>{user?.name?.split(" ")[0] || "there"},<br />
+        <span className="text-purple-200">what do you need today?</span></>
+      ) : (
+        <>Browse services,<br />
+        <span className="text-purple-200">no sign-in needed!</span></>
+      )}
     </h2>
 
     {/* Active filters */}

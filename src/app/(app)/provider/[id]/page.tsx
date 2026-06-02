@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { TopNav } from "@/components/shared/TopNav";
 import { StarRating } from "@/components/ui/StarRating";
+import { LoginPromptModal } from "@/components/ui/LoginPromptModal";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore, useLocationStore } from "@/lib/store";
 import { formatDistance } from "@/lib/geo";
@@ -30,6 +31,18 @@ export default function ProviderProfilePage() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [loginPromptAction, setLoginPromptAction] = useState("book this service");
+  const pathname = usePathname();
+
+  const requireAuth = (action: string, cb: () => void) => {
+    if (!user) {
+      setLoginPromptAction(action);
+      setLoginPromptOpen(true);
+    } else {
+      cb();
+    }
+  };
 
   // Generate available time slots from provider's working hours
   const getTimeSlots = () => {
@@ -80,7 +93,7 @@ export default function ProviderProfilePage() {
       return;
     }
     if (!scheduledTime) { toast.error("Please select a time for your appointment"); return; }
-    if (!user) { router.push("/login"); return; }
+    if (!user) { setLoginPromptOpen(true); return; }
     setBookingLoading(true);
     const token = localStorage.getItem("auth_token");
     try {
@@ -241,7 +254,7 @@ export default function ProviderProfilePage() {
         <div className="px-4 mt-4">
           <div className="grid grid-cols-3 gap-3">
             <button
-              onClick={() => setShowRatingModal(true)}
+              onClick={() => requireAuth("rate this provider", () => setShowRatingModal(true))}
               className="card p-4 flex flex-col items-center gap-2 hover:shadow-md transition-all active:scale-95"
             >
               <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
@@ -390,10 +403,21 @@ export default function ProviderProfilePage() {
         </div>
       </div>
 
+      {/* Login Prompt Modal */}
+      <LoginPromptModal
+        isOpen={loginPromptOpen}
+        onClose={() => setLoginPromptOpen(false)}
+        from={pathname}
+        action={loginPromptAction}
+      />
+
       {/* Book Now Button */}
       {provider.isAvailable && (
         <div className="fixed bottom-0 left-0 right-0 p-4 glass-nav">
-          <button onClick={() => setBookingModalOpen(true)} className="btn-primary w-full text-base flex items-center justify-center gap-2">
+          <button
+            onClick={() => requireAuth("book this service", () => setBookingModalOpen(true))}
+            className="btn-primary w-full text-base flex items-center justify-center gap-2"
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
               <line x1="16" y1="2" x2="16" y2="6"/>

@@ -6,6 +6,8 @@ const PUBLIC_PATHS = [
   "/register",
   "/forgot-password",
   "/reset-password",
+  "/hire",
+  "/provider",
 ];
 
 const PUBLIC_API = [
