@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { auth, RecaptchaVerifier, signInWithPhoneNumber, googleProvider, signInWithPopup } from "@/lib/firebase";
@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-export default function LoginPage() {
+function LoginPageInner() {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -412,5 +412,13 @@ export default function LoginPage() {
         </p>
       </main>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" style={{ background: "var(--bg)" }} />}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
