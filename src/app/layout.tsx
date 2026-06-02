@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ThemeProvider } from "@/lib/theme";
+import { FancyCursor } from "@/components/ui/FancyCursor";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -15,7 +16,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={inter.className} style={{ cursor: "none" }}>
+        <FancyCursor />
         <LanguageProvider>
           <AuthProvider>
             <ThemeProvider>

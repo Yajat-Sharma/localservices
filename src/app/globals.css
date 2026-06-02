@@ -76,6 +76,13 @@
   }
 }
 
+/* ─── Custom Cursor — hide native on desktop only ───── */
+@media (pointer: fine) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
+}
+
 /* ─── Components ────────────────────────────────────── */
 @layer components {
 
