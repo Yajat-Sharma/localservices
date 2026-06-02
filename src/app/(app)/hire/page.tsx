@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { TopNav } from "@/components/shared/TopNav";
 import { ProviderCard } from "@/components/provider/ProviderCard";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -8,17 +9,18 @@ import { useAuthStore, useLocationStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-export default function HirePage() {
+function HirePageInner() {
   const { t, language } = useLanguage();
   const { user } = useAuthStore();
   const { latitude, longitude, setLocation } = useLocationStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [categories, setCategories] = useState<any[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
   const [topProviders, setTopProviders] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category") || null);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -481,5 +483,13 @@ export default function HirePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function HirePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" style={{ background: "var(--bg)" }} />}>
+      <HirePageInner />
+    </Suspense>
   );
 }

@@ -1,19 +1,20 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const SERVICES = [
-  { icon: "⚡", name: "Electrician",  nameHi: "इलेक्ट्रीशियन", color: "#fbbf24", bg: "#fffbeb" },
-  { icon: "🔧", name: "Plumber",      nameHi: "प्लम्बर",        color: "#60a5fa", bg: "#eff6ff" },
-  { icon: "🧹", name: "Cleaning",     nameHi: "सफाई",           color: "#34d399", bg: "#ecfdf5" },
-  { icon: "🎨", name: "Painter",      nameHi: "पेंटर",          color: "#f472b6", bg: "#fdf2f8" },
-  { icon: "❄️", name: "AC Repair",    nameHi: "AC रिपेयर",      color: "#818cf8", bg: "#eef2ff" },
-  { icon: "🔒", name: "Locksmith",    nameHi: "ताला साज़",       color: "#fb923c", bg: "#fff7ed" },
-  { icon: "📺", name: "TV Repair",    nameHi: "TV रिपेयर",      color: "#a78bfa", bg: "#f5f3ff" },
-  { icon: "🍱", name: "Tiffin",       nameHi: "टिफिन",          color: "#4ade80", bg: "#f0fdf4" },
+  { icon: "⚡", name: "Electrician",  nameHi: "इलेक्ट्रीशियन", color: "#fbbf24", bg: "#fffbeb", slug: "electrician" },
+  { icon: "🔧", name: "Plumber",      nameHi: "प्लम्बर",        color: "#60a5fa", bg: "#eff6ff", slug: "plumber" },
+  { icon: "🧹", name: "Cleaning",     nameHi: "सफाई",           color: "#34d399", bg: "#ecfdf5", slug: "cleaning" },
+  { icon: "🎨", name: "Painter",      nameHi: "पेंटर",          color: "#f472b6", bg: "#fdf2f8", slug: "painter" },
+  { icon: "❄️", name: "AC Repair",    nameHi: "AC रिपेयर",      color: "#818cf8", bg: "#eef2ff", slug: "ac-repair" },
+  { icon: "🔒", name: "Locksmith",    nameHi: "ताला साज़",       color: "#fb923c", bg: "#fff7ed", slug: "locksmith" },
+  { icon: "📺", name: "TV Repair",    nameHi: "TV रिपेयर",      color: "#a78bfa", bg: "#f5f3ff", slug: "tv-repair" },
+  { icon: "🍱", name: "Tiffin",       nameHi: "टिफिन",          color: "#4ade80", bg: "#f0fdf4", slug: "tiffin" },
 ];
 
 const STEPS = [
@@ -39,8 +40,16 @@ const TESTIMONIALS = [
 
 export default function LandingPage() {
   const { language } = useLanguage();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (q) router.push(`/hire?search=${encodeURIComponent(q)}`);
+    else router.push("/hire");
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -135,22 +144,24 @@ export default function LandingPage() {
               </svg>
               <input
                 type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
                 placeholder="What service do you need?"
                 className="input-field pl-11 py-4"
                 style={{ borderRadius: "16px" }}
-                onKeyDown={e => { if (e.key === "Enter") window.location.href = "/register"; }}
+                onKeyDown={e => { if (e.key === "Enter") handleSearch(); }}
               />
             </div>
-            <Link href="/register" className="btn-primary px-8 py-4 whitespace-nowrap">
+            <button onClick={handleSearch} className="btn-primary px-8 py-4 whitespace-nowrap">
               Find Now
-            </Link>
+            </button>
           </div>
 
           {/* Popular services */}
           <div className="flex flex-wrap items-center justify-center gap-2 animate-fade-in delay-400">
             <span className="text-sm" style={{ color: "var(--text-muted)" }}>Popular:</span>
             {SERVICES.slice(0, 5).map(s => (
-              <Link key={s.name} href="/register"
+              <Link key={s.name} href={`/hire?category=${s.slug}`}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:scale-105"
                 style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}30` }}>
                 <span>{s.icon}</span>
@@ -176,7 +187,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {SERVICES.map((service, i) => (
-              <Link key={service.name} href="/register"
+              <Link key={service.name} href={`/hire?category=${service.slug}`}
                 className="group card p-5 text-center cursor-pointer"
                 style={{ animationDelay: `${i * 0.05}s` }}>
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl transition-transform group-hover:scale-110"
