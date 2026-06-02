@@ -33,6 +33,8 @@ export default function ProviderProfilePage() {
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [loginPromptAction, setLoginPromptAction] = useState("book this service");
+  const [reviewPhotos, setReviewPhotos] = useState<string[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const pathname = usePathname();
 
   const requireAuth = (action: string, cb: () => void) => {
@@ -117,14 +119,31 @@ export default function ProviderProfilePage() {
     const token = localStorage.getItem("auth_token");
     try {
       await axios.post(`/api/providers/${id}/review`, {
-        rating: myRating, comment: myComment
+        rating: myRating, comment: myComment, photos: reviewPhotos,
       }, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success("Review submitted!");
+      toast.success("Review submitted! Thank you 🙏");
       setShowRatingModal(false);
+      setMyRating(0); setMyComment(""); setReviewPhotos([]);
       fetchProvider();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to submit review");
     }
+  };
+
+  const handleReviewPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (reviewPhotos.length + files.length > 3) { toast.error("Max 3 photos"); return; }
+    setPhotoUploading(true);
+    const token = localStorage.getItem("auth_token");
+    try {
+      const urls = await Promise.all(files.map(async (file) => {
+        const fd = new FormData(); fd.append("file", file);
+        const res = await axios.post("/api/upload", fd, { headers: { Authorization: `Bearer ${token}` } });
+        return res.data.url as string;
+      }));
+      setReviewPhotos(prev => [...prev, ...urls].slice(0, 3));
+    } catch { toast.error("Photo upload failed"); }
+    finally { setPhotoUploading(false); }
   };
 
   if (loading) return (
@@ -396,6 +415,20 @@ export default function ProviderProfilePage() {
                       {review.comment}
                     </p>
                   )}
+                  {/* Review Photos */}
+                  {review.photos?.length > 0 && (
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {review.photos.map((url: string, i: number) => (
+                        <button
+                          key={i}
+                          onClick={() => setActivePhoto(url)}
+                          className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-700 hover:opacity-90 transition-opacity"
+                        >
+                          <Image src={url} alt={`Review photo ${i + 1}`} fill className="object-cover" sizes="120px" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -473,9 +506,9 @@ export default function ProviderProfilePage() {
 
       {/* Rating Modal */}
       {showRatingModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="bottom-sheet p-6 w-full animate-slide-up">
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2">{t("rate_service")}</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-end z-50" onClick={() => setShowRatingModal(false)}>
+          <div className="bottom-sheet p-6 w-full animate-slide-up max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1">{t("rate_service")}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{provider.businessName}</p>
             <div className="flex justify-center mb-5">
               <StarRating value={myRating} onChange={setMyRating} size="lg" />
@@ -487,9 +520,51 @@ export default function ProviderProfilePage() {
               rows={3}
               className="input-field mb-4 resize-none"
             />
+
+            {/* Photo Upload */}
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                📸 Add before/after photos <span className="text-gray-400 font-normal">(optional, max 3)</span>
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {reviewPhotos.map((url, i) => (
+                  <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                    <Image src={url} alt={`photo ${i}`} fill className="object-cover" sizes="80px" />
+                    <button
+                      onClick={() => setReviewPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"
+                    >
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                {reviewPhotos.length < 3 && (
+                  <label className="w-20 h-20 rounded-xl border-2 border-dashed border-purple-300 dark:border-purple-700 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 transition-colors flex-shrink-0">
+                    {photoUploading ? (
+                      <span className="w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/>
+                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                          <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                        <span className="text-xs text-purple-400 mt-1 font-medium">Add</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleReviewPhotoUpload} multiple />
+                  </label>
+                )}
+              </div>
+            </div>
+
             <div className="flex gap-3">
-              <button onClick={() => setShowRatingModal(false)} className="btn-secondary flex-1">{t("cancel")}</button>
-              <button onClick={handleRatingSubmit} className="btn-primary flex-1">{t("submit_review")}</button>
+              <button onClick={() => { setShowRatingModal(false); setReviewPhotos([]); }} className="btn-secondary flex-1">{t("cancel")}</button>
+              <button onClick={handleRatingSubmit} disabled={!myRating || photoUploading} className="btn-primary flex-1">
+                {photoUploading ? "Uploading..." : t("submit_review")}
+              </button>
             </div>
           </div>
         </div>

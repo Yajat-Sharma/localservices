@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { uploadImage } from "@/lib/cloudinary";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
@@ -35,7 +36,21 @@ export async function POST(req: NextRequest) {
     const provider = await prisma.provider.update({
       where: { id: user.provider.id },
       data: updateData,
+      include: { user: true },
     });
+
+    // Email the admin for each uploaded document
+    const adminEmail = process.env.EMAIL_USER;
+    if (adminEmail) {
+      if (idProof) {
+        const tpl = emailTemplates.docSubmitted(provider.user.name || "Unknown", provider.businessName || "Unknown", "ID Proof");
+        await sendEmail({ to: adminEmail, ...tpl });
+      }
+      if (license) {
+        const tpl = emailTemplates.docSubmitted(provider.user.name || "Unknown", provider.businessName || "Unknown", "Business License");
+        await sendEmail({ to: adminEmail, ...tpl });
+      }
+    }
 
     return NextResponse.json({ provider, message: "Documents uploaded successfully!" });
   } catch (err) {

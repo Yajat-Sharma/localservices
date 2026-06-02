@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
@@ -43,6 +44,23 @@ export async function PATCH(req: NextRequest) {
     data: updateData,
     include: { user: true }
   });
+
+  // Email the provider about their document status
+  const providerEmail = provider.user.email;
+  const providerName = provider.user.name || "there";
+  if (providerEmail) {
+    const docType = idProofStatus ? "ID Proof" : "Business License";
+    const status = idProofStatus || licenseStatus;
+    const bothApproved = provider.isVerified;
+
+    if (status === "APPROVED") {
+      const tpl = emailTemplates.docApproved(providerName, docType, !!bothApproved);
+      await sendEmail({ to: providerEmail, ...tpl });
+    } else if (status === "REJECTED") {
+      const tpl = emailTemplates.docRejected(providerName, docType, reason || "");
+      await sendEmail({ to: providerEmail, ...tpl });
+    }
+  }
 
   if (reason && (idProofStatus === "REJECTED" || licenseStatus === "REJECTED")) {
     const docName = idProofStatus === "REJECTED" ? "ID Proof" : "Business License";
