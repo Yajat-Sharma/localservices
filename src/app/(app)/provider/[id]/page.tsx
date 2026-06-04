@@ -617,35 +617,33 @@ export default function ProviderProfilePage() {
               </div>
 
               {/* Scheduling */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                  Date of Appointment <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <input
-                      type="date"
-                      value={scheduledDate}
-                      onChange={e => setScheduledDate(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                      className="input-field text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                      Time of Appointment <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={scheduledTime}
-                      onChange={e => setScheduledTime(e.target.value)}
-                      className="input-field text-sm"
-                    >
-                      <option value="">Select a time</option>
-                      {getTimeSlots().map(slot => (
-                        <option key={slot.value} value={slot.value}>{slot.label}</option>
-                      ))}
-                    </select>
-                  </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                    Date of Appointment <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={e => setScheduledDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="input-field text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                    Time of Appointment <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={scheduledTime}
+                    onChange={e => setScheduledTime(e.target.value)}
+                    className="input-field text-sm"
+                  >
+                    <option value="">Select a time</option>
+                    {getTimeSlots().map(slot => (
+                      <option key={slot.value} value={slot.value}>{slot.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
