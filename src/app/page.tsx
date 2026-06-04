@@ -368,10 +368,7 @@ export default function LandingPage() {
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             © 2026 LocalServices • Made with ❤️ in India
           </p>
-          <div className="flex items-center gap-4">
-            <LanguageSwitcher />
-            <ThemeToggle />
-          </div>
+          <LanguageSwitcher />
         </div>
       </footer>
     </div>
