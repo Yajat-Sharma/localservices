@@ -15,7 +15,7 @@ function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromPath = searchParams.get("from");
-  const { setUser, setToken } = useAuthStore();
+  const { setUser } = useAuthStore();
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,16 +38,11 @@ function LoginPageInner() {
 
   const saveSession = (token: string, user: any) => {
     const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
-    if (keepSignedIn) {
-      // Persist across browser restarts — 30 days
-      localStorage.setItem("auth_token", token);
-      document.cookie = `auth_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax${secureFlag}`;
-    } else {
-      // Session only — cleared when browser closes
-      sessionStorage.setItem("auth_token", token);
-      document.cookie = `auth_token=${token}; path=/; SameSite=Lax${secureFlag}`;
-    }
-    setToken(token); setUser(user);
+    const maxAge = keepSignedIn ? `; max-age=${30 * 24 * 60 * 60}` : "";
+    // Single source of truth: HttpOnly-equivalent cookie (browser sends it automatically).
+    // localStorage is intentionally omitted — the middleware reads the cookie for SSR auth.
+    document.cookie = `auth_token=${token}; path=/${maxAge}; SameSite=Lax${secureFlag}`;
+    setUser(user);
     // If user came from a specific page (e.g. provider profile), return them there
     const destination = fromPath && fromPath.startsWith("/") ? fromPath : null;
     if (destination) { router.replace(destination); return; }
@@ -56,6 +51,7 @@ function LoginPageInner() {
     else if (user.role === "PROVIDER") router.replace("/provide/dashboard");
     else router.replace("/hire");
   };
+
 
   const handleGoogleLogin = async () => {
     setLoading(true);

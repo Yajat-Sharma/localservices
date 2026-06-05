@@ -7,7 +7,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 export default function SwitchAccountPage() {
-  const { user, setUser, setToken } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const { latitude, longitude } = useLocationStore();
   const router = useRouter();
   const [step, setStep] = useState<"choose" | "register" | "pending">("choose");
@@ -34,25 +34,18 @@ export default function SwitchAccountPage() {
   };
 
   const checkProviderStatus = async () => {
-    const token = localStorage.getItem("auth_token");
     try {
-      const res = await axios.get("/api/providers/me/details", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get("/api/providers/me/details");
       setProviderStatus(res.data.provider);
     } catch {}
   };
 
   const handleSwitchRole = async (role: string) => {
     setLoading(true);
-    const token = localStorage.getItem("auth_token");
     try {
-      const res = await axios.post("/api/users/switch-role", { role }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      localStorage.setItem("auth_token", res.data.token);
-      document.cookie = `auth_token=${res.data.token}; path=/; max-age=${30 * 24 * 60 * 60}`;
-      setToken(res.data.token);
+      const res = await axios.post("/api/users/switch-role", { role });
+      const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = `auth_token=${res.data.token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax${secureFlag}`;
       setUser(res.data.user);
       toast.success(`Switched to ${role} account!`);
       if (role === "PROVIDER") router.replace("/provide/dashboard");
@@ -69,7 +62,6 @@ export default function SwitchAccountPage() {
       return;
     }
     setLoading(true);
-    const token = localStorage.getItem("auth_token");
     try {
       await axios.post("/api/users/become-provider", {
         ...form,

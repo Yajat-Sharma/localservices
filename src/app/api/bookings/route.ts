@@ -1,32 +1,15 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
-import nodemailer from "nodemailer";
+import { sendEmail } from "@/lib/email";
 import { createNotification } from "@/lib/notifications";
-import { sendSMS, SMS_TEMPLATES } from "@/lib/sms";
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-async function sendEmail(to: string, subject: string, html: string) {
-  try {
-    await transporter.sendMail({
-      from: `"LocalServices" <${process.env.EMAIL_USER}>`,
-      to, subject, html,
-    });
-  } catch (err) { console.error("Email error:", err); }
-}
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const where: any = user.role === "PROVIDER" && user.provider
+  const where: Prisma.BookingWhereInput = user.role === "PROVIDER" && user.provider
     ? { providerId: user.provider.id }
     : { customerId: user.id };
   const bookings = await prisma.booking.findMany({

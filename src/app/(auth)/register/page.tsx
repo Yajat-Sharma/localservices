@@ -18,7 +18,7 @@ function RegisterPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setUser, setToken, user } = useAuthStore();
+  const { setUser, user } = useAuthStore();
   const [step, setStep] = useState("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState(["","","","","",""]);
@@ -88,9 +88,8 @@ function RegisterPage() {
       const res = await axios.post("/api/auth/login", { firebaseToken, phone: result.user.phoneNumber });
       const { token, user: userData } = res.data;
       const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
-      localStorage.setItem("auth_token", token);
       document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}; SameSite=Lax${secureFlag}`;
-      setToken(token); setUser(userData); setStep("name");
+      setUser(userData); setStep("name");
     } catch (err: any) {
       console.error("Verify error:", err);
       toast.error(t("invalid_otp"));
@@ -100,27 +99,19 @@ function RegisterPage() {
   const handleSaveName = async () => {
     if (!name.trim()) { toast.error("Please enter your name"); return; }
     setLoading(true);
-    const token = localStorage.getItem("auth_token");
     try {
-      const res = await axios.patch("/api/auth/me", { name }, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.patch("/api/auth/me", { name });
       setUser(res.data.user); setStep("role");
     } catch { toast.error("Failed to save name"); }
     finally { setLoading(false); }
   };
 
+
   const handleRoleSelect = async (role: string) => {
     setSelectedRole(role);
     setLoading(true);
-    const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
-    if (!token) {
-      toast.error("Session expired. Please log in again.");
-      router.replace("/login");
-      setLoading(false);
-      setSelectedRole(null);
-      return;
-    }
     try {
-      const res = await axios.patch("/api/auth/me", { role }, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.patch("/api/auth/me", { role });
       setUser(res.data.user);
       toast.success(role === "PROVIDER" ? "Welcome, Provider! Let's set up your profile." : "Welcome! Let's find you great services.");
       if (role === "PROVIDER") router.replace("/provide/register");
@@ -147,9 +138,7 @@ function RegisterPage() {
       const res = await axios.post("/api/auth/google", { firebaseToken });
       const { token, user: userData, isNewUser } = res.data;
       const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
-      localStorage.setItem("auth_token", token);
       document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}; SameSite=Lax${secureFlag}`;
-      setToken(token);
       setUser(userData);
       
       if (isNewUser) {
@@ -179,9 +168,7 @@ function RegisterPage() {
     });
     const { token, user: userData } = res.data;
     const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
-    localStorage.setItem("auth_token", token);
     document.cookie = `auth_token=${token}; path=/; max-age=${30*24*60*60}; SameSite=Lax${secureFlag}`;
-    setToken(token);
     setUser(userData);
     setStep("role");
     toast.success("Account created!");

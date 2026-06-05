@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# lighthouse
+lighthouse-report.json
+lighthouse-report.html
+
+# local powershell scripts (setup, fix, pages, etc.)
+*.ps1

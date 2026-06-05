@@ -21,7 +21,7 @@ interface TopNavProps {
 
 export function TopNav({ title, subtitle, showBack, onBack, showSearch, searchValue, onSearch, rightElement }: TopNavProps) {
   const { t } = useLanguage();
-  const { user, setUser, setToken } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -99,12 +99,10 @@ export function TopNav({ title, subtitle, showBack, onBack, showSearch, searchVa
             {user?.originalRole === "ADMIN" && user?.role !== "ADMIN" && (
               <button
                 onClick={async () => {
-                  const token = localStorage.getItem("auth_token");
                   try {
-                    const res = await axios.post("/api/users/switch-role", { role: "ADMIN" }, { headers: { Authorization: `Bearer ${token}` } });
-                    localStorage.setItem("auth_token", res.data.token);
-                    document.cookie = `auth_token=${res.data.token}; path=/; max-age=${30*24*60*60}`;
-                    setToken(res.data.token);
+                    const res = await axios.post("/api/users/switch-role", { role: "ADMIN" });
+                    const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
+                    document.cookie = `auth_token=${res.data.token}; path=/; max-age=${30*24*60*60}; SameSite=Lax${secureFlag}`;
                     setUser(res.data.user);
                     router.replace("/admin");
                   } catch {}

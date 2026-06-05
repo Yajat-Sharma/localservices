@@ -1,7 +1,12 @@
 import { SignJWT, jwtVerify } from "jose";
 
-// Always require JWT_SECRET in production. Using a fallback only for development safety.
-const secretKey = process.env.JWT_SECRET || "fallback_secret_32_chars_minimum!!";
+const secretKey = process.env.JWT_SECRET;
+if (!secretKey) {
+  throw new Error(
+    "JWT_SECRET environment variable is required. " +
+    "Add it to your .env file. Without it any token can be forged."
+  );
+}
 const SECRET = new TextEncoder().encode(secretKey);
 
 export async function signToken(payload: Record<string, unknown>) {
