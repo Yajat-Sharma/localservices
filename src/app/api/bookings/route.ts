@@ -84,10 +84,10 @@ export async function POST(req: NextRequest) {
   // Removing `await` prevents Gmail latency from blocking the booking response.
   void Promise.all([
     provider.user.email
-      ? sendEmail(
-          provider.user.email,
-          `🔔 New Booking Request — ${provider.category.name} | ${formattedDate}`,
-          `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; border-radius: 16px; overflow: hidden;">
+      ? sendEmail({
+          to: provider.user.email,
+          subject: `🔔 New Booking Request — ${provider.category.name} | ${formattedDate}`,
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; border-radius: 16px; overflow: hidden;">
         <div style="background: linear-gradient(135deg, #2563eb, #4f46e5); padding: 28px 24px;">
           <h1 style="color: white; margin: 0; font-size: 22px;">🔔 New Booking Request!</h1>
           <p style="color: rgba(255,255,255,0.8); margin: 6px 0 0; font-size: 14px;">${provider.category.name} service</p>
@@ -120,18 +120,18 @@ export async function POST(req: NextRequest) {
             </tr>
           </table>
           <div style="margin-top: 24px;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/bookings" style="display: inline-block; background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px;">View & Accept Booking →</a>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/bookings" style="display: inline-block; background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px;">View &amp; Accept Booking →</a>
           </div>
         </div>
-      </div>`
-        )
+      </div>`,
+        })
       : Promise.resolve(),
 
     user.email
-      ? sendEmail(
-          user.email,
-          `✅ Booking Confirmed — ${provider.category.name} on ${formattedDate}`,
-          `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; border-radius: 16px; overflow: hidden;">
+      ? sendEmail({
+          to: user.email,
+          subject: `✅ Booking Confirmed — ${provider.category.name} on ${formattedDate}`,
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; border-radius: 16px; overflow: hidden;">
         <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 28px 24px;">
           <h1 style="color: white; margin: 0; font-size: 22px;">✅ Booking Request Sent!</h1>
           <p style="color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 14px;">Your request is being reviewed by the provider</p>
@@ -159,8 +159,8 @@ export async function POST(req: NextRequest) {
             <a href="${process.env.NEXT_PUBLIC_APP_URL}/bookings" style="display: inline-block; background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px;">Track Your Booking →</a>
           </div>
         </div>
-      </div>`
-        )
+      </div>`,
+        })
       : Promise.resolve(),
 
     createNotification({
