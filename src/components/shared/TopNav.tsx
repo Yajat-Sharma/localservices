@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
@@ -24,6 +24,64 @@ export function TopNav({ title, subtitle, showBack, onBack, showSearch, searchVa
   const { user, setUser } = useAuthStore();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("recent_searches");
+      if (saved) {
+        try {
+          setRecentSearches(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed to parse recent searches", e);
+        }
+      }
+    }
+  }, []);
+
+  const saveSearchTerm = (term: string) => {
+    const query = term.trim();
+    if (!query) return;
+    setRecentSearches(prev => {
+      const filtered = prev.filter(item => item.toLowerCase() !== query.toLowerCase());
+      const updated = [query, ...filtered].slice(0, 5);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("recent_searches", JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const deleteSearchTerm = (term: string) => {
+    setRecentSearches(prev => {
+      const updated = prev.filter(item => item !== term);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("recent_searches", JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const clearAllHistory = () => {
+    setRecentSearches([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("recent_searches");
+    }
+  };
+
+  // Debounced auto-save
+  useEffect(() => {
+    if (!searchValue || searchValue.trim() === "") return;
+    const handler = setTimeout(() => {
+      saveSearchTerm(searchValue);
+    }, 1500);
+    return () => clearTimeout(handler);
+  }, [searchValue]);
+
+  const filteredSearches = recentSearches.filter(term =>
+    term.toLowerCase().includes((searchValue || "").toLowerCase())
+  );
 
   return (
     <>
@@ -74,9 +132,96 @@ export function TopNav({ title, subtitle, showBack, onBack, showSearch, searchVa
                   color: "var(--text-input)",
                   outline: "none",
                 }}
-                onFocus={e => { e.target.style.borderColor = "var(--primary)"; e.target.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.1)"; }}
-                onBlur={e => { e.target.style.borderColor = "rgba(124,58,237,0.1)"; e.target.style.boxShadow = "none"; }}
+                onFocus={e => {
+                  e.target.style.borderColor = "var(--primary)";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.1)";
+                  setIsFocused(true);
+                }}
+                onBlur={e => {
+                  e.target.style.borderColor = "rgba(124,58,237,0.1)";
+                  e.target.style.boxShadow = "none";
+                  setIsFocused(false);
+                }}
+                onKeyDown={e => {
+                  if (e.key === "Escape") {
+                    (e.target as HTMLInputElement).blur();
+                  } else if (e.key === "Enter" && searchValue && searchValue.trim() !== "") {
+                    saveSearchTerm(searchValue);
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
               />
+              {isFocused && filteredSearches.length > 0 && (
+                <div
+                  className="absolute left-0 right-0 mt-2 p-3.5 rounded-2xl shadow-lg border animate-scale-in z-50"
+                  style={{
+                    background: "var(--bg-card)",
+                    borderColor: "var(--border)",
+                    boxShadow: "var(--shadow-lg)",
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-purple-300">
+                      Recent Searches
+                    </span>
+                    <button
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={clearAllHistory}
+                      className="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {filteredSearches.map((term, index) => (
+                      <div
+                        key={term + index}
+                        className="flex items-center justify-between group rounded-xl px-2.5 py-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all cursor-pointer"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => {
+                          onSearch?.(term);
+                          saveSearchTerm(term);
+                          if (document.activeElement instanceof HTMLElement) {
+                            document.activeElement.blur();
+                          }
+                        }}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <svg
+                            className="text-gray-400 group-hover:text-purple-500 transition-colors"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                            {term}
+                          </span>
+                        </div>
+                        <button
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Avoid triggering search
+                            deleteSearchTerm(term);
+                          }}
+                          className="p-1 rounded-lg text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all opacity-60 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
+                          title="Remove search"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex-1">
