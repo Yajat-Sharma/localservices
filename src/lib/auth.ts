@@ -40,3 +40,10 @@ export async function getUserFromRequest(request: Request) {
   userCache.set(token, { user, expires: Date.now() + USER_CACHE_TTL_MS });
   return user;
 }
+
+/** Call this after any mutation that changes user fields (profile edit, phone update, etc.)
+ *  so the next request gets fresh data instead of the cached version. */
+export function invalidateUserCache(request: Request) {
+  const token = getTokenFromRequest(request);
+  if (token) userCache.delete(token);
+}

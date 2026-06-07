@@ -17,6 +17,7 @@ export default function ProviderEditPage() {
     priceMin: "",
     priceMax: "",
     whatsapp: "",
+    phone: "",
     allowMultiple: false,
     workingHours: {
       startHour: 8,
@@ -34,6 +35,8 @@ export default function ProviderEditPage() {
       priceMin: String(p.priceMin || ""),
       priceMax: String(p.priceMax || ""),
       whatsapp: p.whatsapp || "",
+      // Pre-fill phone from user record, strip +91 prefix for the input
+      phone: (user.phone || "").replace(/^\+91/, ""),
       allowMultiple: p.allowMultiple || false,
       workingHours: p.workingHours || { startHour: 8, endHour: 18, days: [1,2,3,4,5,6] },
     });
@@ -44,9 +47,13 @@ export default function ProviderEditPage() {
       toast.error("Please set price range");
       return;
     }
+    if (form.phone && form.phone.length !== 10) {
+      toast.error("Enter a valid 10-digit phone number");
+      return;
+    }
     setLoading(true);
-    const token = localStorage.getItem("auth_token");
     try {
+      // Save provider-specific fields
       const res = await axios.patch("/api/providers/me", {
         description: form.description,
         priceMin: Number(form.priceMin),
@@ -54,13 +61,21 @@ export default function ProviderEditPage() {
         whatsapp: form.whatsapp,
         allowMultiple: form.allowMultiple,
         workingHours: form.workingHours,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      });
 
-      setUser({ ...user!, provider: { ...user!.provider!, ...res.data.provider } } as any);
+      // Save phone to user record if changed
+      const newPhone = form.phone ? `+91${form.phone}` : undefined;
+      if (newPhone && newPhone !== user!.phone) {
+        const userRes = await axios.patch("/api/users/me", { phone: newPhone });
+        setUser({ ...user!, phone: userRes.data.user.phone, provider: { ...user!.provider!, ...res.data.provider } } as any);
+      } else {
+        setUser({ ...user!, provider: { ...user!.provider!, ...res.data.provider } } as any);
+      }
+
       toast.success("Profile updated!");
       router.replace("/provide/dashboard");
-    } catch {
-      toast.error("Failed to update profile");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -138,6 +153,32 @@ export default function ProviderEditPage() {
             placeholder="+91 9876543210"
             className="input-field"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Contact Phone Number
+            <span className="ml-2 text-xs font-normal text-gray-400">(visible to customers after booking)</span>
+          </label>
+          <div className="flex gap-2">
+            <div className="flex items-center px-3 rounded-2xl text-sm font-bold flex-shrink-0"
+              style={{
+                background: "var(--bg-input)",
+                border: "1.5px solid var(--border-input)",
+                color: "var(--text-primary)",
+                height: "52px"
+              }}>
+              🇮🇳 +91
+            </div>
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={e => setForm({...form, phone: e.target.value.replace(/\D/g, "")})}
+              placeholder="9876543210"
+              maxLength={10}
+              className="input-field flex-1"
+            />
+          </div>
         </div>
 
         <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200">

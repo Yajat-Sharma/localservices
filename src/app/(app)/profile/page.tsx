@@ -20,6 +20,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user) { router.replace("/login"); return; }
     setName(user.name || "");
+    // Pre-fill phone without the +91 prefix so the user can edit it
+    if (user.phone) setNewPhone(user.phone.replace(/^\+91/, ""));
   }, [user, router]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,18 +46,14 @@ export default function ProfilePage() {
     if (!name.trim()) { toast.error("Name required"); return; }
     if (newPhone && newPhone.length !== 10) { toast.error("Enter valid 10-digit number"); return; }
     setLoading(true);
-    const token = localStorage.getItem("auth_token");
     try {
       const updateData: any = { name };
       if (newPhone) updateData.phone = `+91${newPhone}`;
-      const res = await axios.patch("/api/users/me", updateData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.patch("/api/users/me", updateData);
       setUser({ ...user!, name: res.data.user.name, phone: res.data.user.phone });
-      if (newPhone) setNewPhone("");
       toast.success("Profile updated!");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed");
+      toast.error(err.response?.data?.error || "Failed to save");
     } finally { setLoading(false); }
   };
 
@@ -158,55 +156,38 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Phone field */}
+            {/* Phone field — always editable */}
             <div>
               <label className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>
                 Phone Number
-                {/* Show "Add phone" hint only if no phone */}
                 {!user.phone && (
                   <span className="ml-2 text-xs font-bold gradient-text">
                     + Add to enable OTP login
                   </span>
                 )}
               </label>
-
-              {/* If phone EXISTS → show readonly */}
-              {user.phone ? (
-                <div className="input-field flex items-center gap-2 cursor-not-allowed"
-                  style={{ opacity: 0.6 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                    style={{ color: "var(--text-muted)", flexShrink: 0 }}>
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.35 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6.29 6.29l1.83-1.83a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-                  </svg>
-                  <span className="text-sm">{user.phone}</span>
+              <div className="flex gap-2">
+                <div className="flex items-center px-3 rounded-2xl text-sm font-bold flex-shrink-0"
+                  style={{
+                    background: "var(--bg-input)",
+                    border: "1.5px solid var(--border-input)",
+                    color: "var(--text-primary)",
+                    height: "52px"
+                  }}>
+                  🇮🇳 +91
                 </div>
-              ) : (
-                /* If NO phone → show editable input */
-                <div>
-                  <div className="flex gap-2">
-                    <div className="flex items-center px-3 rounded-2xl text-sm font-bold flex-shrink-0"
-                      style={{
-                        background: "var(--bg-input)",
-                        border: "1.5px solid var(--border-input)",
-                        color: "var(--text-primary)",
-                        height: "52px"
-                      }}>
-                      🇮🇳 +91
-                    </div>
-                    <input
-                      type="tel"
-                      value={newPhone}
-                      onChange={e => setNewPhone(e.target.value.replace(/\D/g, ""))}
-                      placeholder="9876543210"
-                      maxLength={10}
-                      className="input-field flex-1"
-                    />
-                  </div>
-                  <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
-                    Adding your phone lets you sign in with OTP in the future
-                  </p>
-                </div>
-              )}
+                <input
+                  type="tel"
+                  value={newPhone}
+                  onChange={e => setNewPhone(e.target.value.replace(/\D/g, ""))}
+                  placeholder="9876543210"
+                  maxLength={10}
+                  className="input-field flex-1"
+                />
+              </div>
+              <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
+                {user.phone ? "Update your phone number" : "Adding your phone lets you sign in with OTP"}
+              </p>
             </div>
 
             {/* Save button */}

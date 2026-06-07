@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserFromRequest, invalidateUserCache } from "@/lib/auth";
 
 export async function PATCH(req: NextRequest) {
   const user = await getUserFromRequest(req);
@@ -28,6 +28,9 @@ export async function PATCH(req: NextRequest) {
     data: updateData,
     include: { provider: { include: { category: true } } },
   });
+
+  // Bust the cache so the next request reflects the new phone/name immediately
+  invalidateUserCache(req);
 
   return NextResponse.json({ user: updated });
 }
