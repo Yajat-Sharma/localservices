@@ -67,7 +67,7 @@ export default function SwitchAccountPage() {
         ...form,
         latitude: latitude || 19.076,
         longitude: longitude || 72.877,
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      });
       toast.success("Provider profile created! Awaiting admin approval.");
       setStep("pending");
       checkProviderStatus();
