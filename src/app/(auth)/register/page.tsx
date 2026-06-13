@@ -431,7 +431,7 @@ function RegisterPageInner() {
             <div className="text-center mb-8">
               <h1 className="font-display text-3xl font-black tracking-tight mb-2"
                 style={{ color: "var(--text-primary)" }}>
-                What's your name?
+                What&apos;s your name?
               </h1>
               <p className="gradient-text font-semibold">Tell us what to call you</p>
             </div>
