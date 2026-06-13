@@ -20,7 +20,7 @@
   --text-secondary:#4b5563;
   --text-muted:    #9ca3af;
   --text-input:    #0f0a1e;
-  --placeholder:   rgba(120, 120, 140, 0.65);
+  --placeholder:   #6b7280;
 
   --border:        rgba(124,58,237,0.15);
   --border-input:  rgba(124,58,237,0.2);
@@ -48,7 +48,7 @@
   --text-secondary:#c4b5fd;
   --text-muted:    #7c6fa0;
   --text-input:    #f0ebff;
-  --placeholder:   rgba(140, 120, 180, 0.5);
+  --placeholder:   #a09bb8;
 
   --border:        rgba(139,92,246,0.2);
   --border-input:  rgba(139,92,246,0.3);
@@ -106,15 +106,19 @@
     outline: none;
     -webkit-appearance: none;
   }
-  .input-field::placeholder {
+  /* ✅ Placeholder — fully opaque, meets WCAG AA in both themes */
+  .input-field::placeholder,
+  .input-field:-webkit-input-placeholder,
+  .input-field::-moz-placeholder,
+  .input-field:-ms-input-placeholder {
     color: var(--placeholder) !important;
     font-weight: 400;
     letter-spacing: 0.01em;
-    opacity: 1;
-    transition: opacity 0.25s ease, color 0.25s ease;
+    opacity: 1 !important;
   }
+  /* Keep placeholder readable on focus — just a tiny fade, not 45% */
   .input-field:focus::placeholder {
-    opacity: 0.45;
+    opacity: 0.75 !important;
     color: var(--placeholder) !important;
   }
   .input-field:focus {
@@ -123,13 +127,39 @@
     background-color: var(--bg-input) !important;
     color: var(--text-input) !important;
   }
-  /* ✅ Fix browser autofill color override */
+  .input-field:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .input-field:disabled::placeholder {
+    opacity: 0.5 !important;
+  }
+  /* ✅ Browser autofill — light mode */
   .input-field:-webkit-autofill,
   .input-field:-webkit-autofill:hover,
   .input-field:-webkit-autofill:focus {
     -webkit-text-fill-color: var(--text-input) !important;
     -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
     transition: background-color 5000s ease-in-out 0s;
+  }
+  /* ✅ Browser autofill — dark mode */
+  .dark .input-field:-webkit-autofill,
+  .dark .input-field:-webkit-autofill:hover,
+  .dark .input-field:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f0ebff !important;
+    -webkit-box-shadow: 0 0 0 1000px #1c1730 inset !important;
+  }
+  /* ✅ Select elements inherit the same styling */
+  select.input-field {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+  }
+  .dark select.input-field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a09bb8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   }
 
   /* PRIMARY BUTTON */
