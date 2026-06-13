@@ -39,9 +39,9 @@ function LoginPageInner() {
   const saveSession = (token: string, user: any) => {
     const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
     const maxAge = keepSignedIn ? `; max-age=${30 * 24 * 60 * 60}` : "";
-    // Single source of truth: HttpOnly-equivalent cookie (browser sends it automatically).
-    // localStorage is intentionally omitted — the middleware reads the cookie for SSR auth.
+    // Cookie for SSR middleware; localStorage for client-side API calls across the app.
     document.cookie = `auth_token=${token}; path=/${maxAge}; SameSite=Lax${secureFlag}`;
+    localStorage.setItem("auth_token", token);
     setUser(user);
     // If user came from a specific page (e.g. provider profile), return them there
     const destination = fromPath && fromPath.startsWith("/") ? fromPath : null;

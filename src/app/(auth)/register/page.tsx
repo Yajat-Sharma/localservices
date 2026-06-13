@@ -71,6 +71,7 @@ function RegisterPageInner() {
   const saveSession = (token: string, userData: any) => {
     const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
     document.cookie = `auth_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax${secureFlag}`;
+    localStorage.setItem("auth_token", token);
     setUser(userData);
   };
 
