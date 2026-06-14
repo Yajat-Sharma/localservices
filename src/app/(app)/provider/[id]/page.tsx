@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { TopNav } from "@/components/shared/TopNav";
@@ -51,6 +51,21 @@ export default function ProviderProfilePage() {
   const [bookingPhoto, setBookingPhoto] = useState<string | null>(null);
   const [bookingPhotoUploading, setBookingPhotoUploading] = useState(false);
   const [fetchingAddress, setFetchingAddress] = useState(false);
+
+  // Persistence & Spam protection states & refs
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const lastSubmitTimeRef = useRef(0);
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return;
+    const timer = setTimeout(() => {
+      setCooldownRemaining(prev => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [cooldownRemaining]);
 
   const requireAuth = (action: string, cb: () => void) => {
     if (!user) {
@@ -231,6 +246,60 @@ export default function ProviderProfilePage() {
     }
   };
 
+  // Load draft from localStorage on page mount / provider load
+  useEffect(() => {
+    if (!id) return;
+    try {
+      const savedDraft = localStorage.getItem(`booking_draft_${id}`);
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        if (draft.problem) setProblem(draft.problem);
+        if (draft.address) setAddress(draft.address);
+        if (draft.landmark) setLandmark(draft.landmark);
+        if (draft.specialInstructions) setSpecialInstructions(draft.specialInstructions);
+        if (draft.scheduledDate) setScheduledDate(draft.scheduledDate);
+        if (draft.scheduledTime) setScheduledTime(draft.scheduledTime);
+      }
+    } catch (err) {
+      console.error("Failed to load booking draft:", err);
+    } finally {
+      setDraftLoaded(true);
+    }
+  }, [id]);
+
+  // Save draft to localStorage (debounced)
+  useEffect(() => {
+    if (!id || !draftLoaded) return;
+
+    const hasValue = problem.trim() || address.trim() || landmark.trim() || specialInstructions.trim() || scheduledTime;
+    if (!hasValue) {
+      try {
+        localStorage.removeItem(`booking_draft_${id}`);
+      } catch (err) {
+        console.error("Failed to clear empty booking draft:", err);
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      try {
+        const draft = {
+          problem,
+          address,
+          landmark,
+          specialInstructions,
+          scheduledDate,
+          scheduledTime
+        };
+        localStorage.setItem(`booking_draft_${id}`, JSON.stringify(draft));
+      } catch (err) {
+        console.error("Failed to save booking draft:", err);
+      }
+    }, 400); // 400ms debounce
+
+    return () => clearTimeout(timer);
+  }, [id, problem, address, landmark, specialInstructions, scheduledDate, scheduledTime, draftLoaded]);
+
   const fetchProvider = useCallback(async () => {
     try {
       const params: any = {};
@@ -249,6 +318,22 @@ export default function ProviderProfilePage() {
   useEffect(() => { fetchProvider(); }, [fetchProvider]);
 
   const handleBook = async () => {
+    // 1. Cooldown check
+    if (cooldownRemaining > 0) {
+      toast.error(`Please wait ${cooldownRemaining}s before submitting another booking.`);
+      return;
+    }
+
+    // 2. Double-click debounce (throttle triggers within 2 seconds)
+    const now = Date.now();
+    if (now - lastSubmitTimeRef.current < 2000) {
+      return;
+    }
+    lastSubmitTimeRef.current = now;
+
+    // 3. Mutex guard
+    if (isSubmitting || bookingLoading) return;
+
     // Touch all fields to show error states if any are invalid
     const allTouched = {
       problem: true,
@@ -281,6 +366,9 @@ export default function ProviderProfilePage() {
     }
 
     if (!user) { setLoginPromptOpen(true); return; }
+
+    // Activate loading state & mutex
+    setIsSubmitting(true);
     setBookingLoading(true);
 
     // Build the full address with landmark if provided
@@ -309,6 +397,16 @@ export default function ProviderProfilePage() {
       toast.success(t("booking_pending"));
       setBookingModalOpen(false);
 
+      // Enforce client-side cooldown of 10 seconds
+      setCooldownRemaining(10);
+
+      // Clear draft on successful submission
+      try {
+        localStorage.removeItem(`booking_draft_${id}`);
+      } catch (err) {
+        console.error("Failed to clear booking draft:", err);
+      }
+
       // Reset form states
       setProblem("");
       setAddress("");
@@ -322,6 +420,7 @@ export default function ProviderProfilePage() {
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Booking failed");
     } finally {
+      setIsSubmitting(false);
       setBookingLoading(false);
     }
   };
