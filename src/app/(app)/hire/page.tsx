@@ -152,7 +152,7 @@ function HirePageInner() {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
       <TopNav
         showSearch
         searchValue={searchQuery}
@@ -331,7 +331,9 @@ function HirePageInner() {
               key={sort.key}
               onClick={() => setFilters(f => ({ ...f, sortBy: sort.key }))}
               className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                filters.sortBy === sort.key ? "bg-blue-500 text-white" : "bg-white text-gray-600 border border-gray-200"
+                filters.sortBy === sort.key
+                  ? "bg-blue-500 text-white"
+                  : "bg-white dark:bg-white/10 text-gray-600 dark:text-white/80 border border-gray-200 dark:border-white/10"
               }`}
             >
               {sort.label}
