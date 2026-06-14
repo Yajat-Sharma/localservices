@@ -28,7 +28,13 @@ export default function ProviderProfilePage() {
   const [problem, setProblem] = useState("");
   const [address, setAddress] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledDate, setScheduledDate] = useState(() => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  });
   const [scheduledTime, setScheduledTime] = useState("");
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
@@ -36,6 +42,15 @@ export default function ProviderProfilePage() {
   const [reviewPhotos, setReviewPhotos] = useState<string[]>([]);
   const [photoUploading, setPhotoUploading] = useState(false);
   const pathname = usePathname();
+
+  // Booking Form validation and UX enhancement states
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [landmark, setLandmark] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [bookingPhoto, setBookingPhoto] = useState<string | null>(null);
+  const [bookingPhotoUploading, setBookingPhotoUploading] = useState(false);
+  const [fetchingAddress, setFetchingAddress] = useState(false);
 
   const requireAuth = (action: string, cb: () => void) => {
     if (!user) {
@@ -67,6 +82,155 @@ export default function ProviderProfilePage() {
     return (wh.days as number[]).includes(dayOfWeek);
   };
 
+  const validateField = (fieldName: string, value: string) => {
+    let errorMsg = "";
+    if (fieldName === "problem") {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        errorMsg = "Please describe your problem.";
+      } else if (trimmed.length < 10) {
+        errorMsg = "Problem description must be at least 10 characters long.";
+      } else if (trimmed.length > 500) {
+        errorMsg = "Problem description cannot exceed 500 characters.";
+      }
+    } else if (fieldName === "address") {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        errorMsg = "Please enter your service address.";
+      } else if (trimmed.length < 10) {
+        errorMsg = "Address must be at least 10 characters long.";
+      } else if (trimmed.length > 250) {
+        errorMsg = "Address cannot exceed 250 characters.";
+      }
+    } else if (fieldName === "scheduledDate") {
+      if (!value) {
+        errorMsg = "Please select an appointment date.";
+      } else {
+        const todayStr = new Date().toISOString().split("T")[0];
+        if (value < todayStr) {
+          errorMsg = "Appointment date cannot be in the past.";
+        } else if (!isDateAllowed(value)) {
+          const wh = provider?.workingHours as any;
+          const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          const allowed = (wh?.days as number[] || []).map((d: number) => days[d]).join(", ");
+          errorMsg = `Provider works only on: ${allowed}`;
+        }
+      }
+    } else if (fieldName === "scheduledTime") {
+      if (!value) {
+        errorMsg = "Please select an appointment time.";
+      }
+    }
+
+    setErrors(prev => ({
+      ...prev,
+      [fieldName]: errorMsg
+    }));
+
+    return !errorMsg;
+  };
+
+  const handleFieldChange = (fieldName: string, value: string) => {
+    if (fieldName === "problem") setProblem(value);
+    else if (fieldName === "address") setAddress(value);
+    else if (fieldName === "scheduledDate") setScheduledDate(value);
+    else if (fieldName === "scheduledTime") setScheduledTime(value);
+
+    if (touched[fieldName]) {
+      validateField(fieldName, value);
+    }
+  };
+
+  const handleFieldBlur = (fieldName: string) => {
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    if (fieldName === "problem") validateField(fieldName, problem);
+    else if (fieldName === "address") validateField(fieldName, address);
+    else if (fieldName === "scheduledDate") validateField(fieldName, scheduledDate);
+    else if (fieldName === "scheduledTime") validateField(fieldName, scheduledTime);
+  };
+
+  const isFormValid = () => {
+    const pTrimmed = problem.trim();
+    const aTrimmed = address.trim();
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    return (
+      pTrimmed.length >= 10 &&
+      pTrimmed.length <= 500 &&
+      aTrimmed.length >= 10 &&
+      aTrimmed.length <= 250 &&
+      scheduledDate >= todayStr &&
+      isDateAllowed(scheduledDate) &&
+      scheduledTime !== ""
+    );
+  };
+
+  const fillAddressWithCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    setFetchingAddress(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+            {
+              headers: {
+                "Accept-Language": language || "en",
+                "User-Agent": "Antigravity-LocalServices"
+              }
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.display_name) {
+              setAddress(data.display_name);
+              validateField("address", data.display_name);
+              toast.success("Address updated with current location!");
+            } else {
+              toast.error("Failed to resolve address from coordinates.");
+            }
+          } else {
+            toast.error("Geocoding service unavailable.");
+          }
+        } catch (error) {
+          console.error("Geocoding error:", error);
+          toast.error("Failed to fetch address. Please type it manually.");
+        } finally {
+          setFetchingAddress(false);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        toast.error("Permission denied or location unavailable.");
+        setFetchingAddress(false);
+      }
+    );
+  };
+
+  const handleBookingPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBookingPhotoUploading(true);
+    const token = localStorage.getItem("auth_token");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await axios.post("/api/upload", fd, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBookingPhoto(res.data.url);
+      toast.success("Photo attached successfully!");
+    } catch {
+      toast.error("Photo upload failed");
+    } finally {
+      setBookingPhotoUploading(false);
+    }
+  };
+
   const fetchProvider = useCallback(async () => {
     try {
       const params: any = {};
@@ -85,27 +249,75 @@ export default function ProviderProfilePage() {
   useEffect(() => { fetchProvider(); }, [fetchProvider]);
 
   const handleBook = async () => {
-    if (!problem.trim()) { toast.error("Please describe your problem"); return; }
-    if (!scheduledDate) { toast.error("Please select a date for your appointment"); return; }
-    if (!isDateAllowed(scheduledDate)) {
-      const wh = provider?.workingHours as any;
-      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      const allowed = (wh?.days as number[] || []).map((d: number) => days[d]).join(", ");
-      toast.error(`Provider works only on: ${allowed}`);
+    // Touch all fields to show error states if any are invalid
+    const allTouched = {
+      problem: true,
+      address: true,
+      scheduledDate: true,
+      scheduledTime: true
+    };
+    setTouched(allTouched);
+
+    const isProblemValid = validateField("problem", problem);
+    const isAddressValid = validateField("address", address);
+    const isDateValid = validateField("scheduledDate", scheduledDate);
+    const isTimeValid = validateField("scheduledTime", scheduledTime);
+
+    if (!isProblemValid || !isAddressValid || !isDateValid || !isTimeValid) {
+      let firstInvalidId = "";
+      if (!isProblemValid) firstInvalidId = "booking-problem";
+      else if (!isAddressValid) firstInvalidId = "booking-address";
+      else if (!isDateValid) firstInvalidId = "booking-scheduledDate";
+      else if (!isTimeValid) firstInvalidId = "booking-scheduledTime";
+
+      if (firstInvalidId) {
+        const element = document.getElementById(firstInvalidId);
+        if (element) {
+          element.focus();
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
       return;
     }
-    if (!scheduledTime) { toast.error("Please select a time for your appointment"); return; }
+
     if (!user) { setLoginPromptOpen(true); return; }
     setBookingLoading(true);
+
+    // Build the full address with landmark if provided
+    const fullAddress = address.trim() + (landmark.trim() ? `, (Landmark: ${landmark.trim()})` : "");
+
+    // Build the full problem description with special instructions and photos if provided
+    let fullProblem = problem.trim();
+    if (specialInstructions.trim()) {
+      fullProblem += `\n\nSpecial Instructions: ${specialInstructions.trim()}`;
+    }
+    if (bookingPhoto) {
+      fullProblem += `\n\nAttached Photo: ${bookingPhoto}`;
+    }
+
     const token = localStorage.getItem("auth_token");
     try {
       await axios.post("/api/bookings", {
-        providerId: id, problem, address, latitude, longitude,
+        providerId: id,
+        problem: fullProblem,
+        address: fullAddress,
+        latitude,
+        longitude,
         scheduledDate: scheduledDate || null,
         scheduledTime: scheduledTime || null,
       }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(t("booking_pending"));
       setBookingModalOpen(false);
+
+      // Reset form states
+      setProblem("");
+      setAddress("");
+      setLandmark("");
+      setSpecialInstructions("");
+      setBookingPhoto(null);
+      setTouched({});
+      setErrors({});
+
       router.push("/bookings");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Booking failed");
@@ -578,7 +790,8 @@ export default function ProviderProfilePage() {
               <h3 className="font-bold text-lg text-gray-900 dark:text-white">{t("confirm_booking")}</h3>
               <button
                 onClick={() => setBookingModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-500"
+                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                aria-label="Close booking modal"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18"/>
@@ -588,79 +801,219 @@ export default function ProviderProfilePage() {
             </div>
 
             <div className="space-y-4">
-              {/* Problem */}
+              {/* Problem Description */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                  {t("describe_problem")}
-                </label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label htmlFor="booking-problem" className="text-sm font-semibold text-gray-700 dark:text-gray-300 block">
+                    {t("describe_problem")} <span className="text-red-500" aria-hidden="true">*</span>
+                  </label>
+                  <span className="text-xs text-gray-400 font-medium" aria-live="polite">
+                    {problem.trim().length} / 500
+                  </span>
+                </div>
                 <textarea
+                  id="booking-problem"
                   value={problem}
-                  onChange={(e) => setProblem(e.target.value)}
-                  placeholder={t("problem_placeholder")}
+                  onChange={(e) => handleFieldChange("problem", e.target.value)}
+                  onBlur={() => handleFieldBlur("problem")}
+                  placeholder="Describe the issue (e.g., Kitchen sink leaking, fan not working, wiring issue in bedroom)."
                   rows={3}
-                  className="input-field resize-none"
+                  maxLength={500}
+                  className={`input-field resize-none ${touched.problem && errors.problem ? '!border-red-500 focus:!ring-red-500/20' : ''}`}
+                  aria-required="true"
+                  aria-invalid={touched.problem && !!errors.problem ? "true" : "false"}
+                  aria-describedby={touched.problem && errors.problem ? "problem-error" : undefined}
                 />
+                {touched.problem && errors.problem && (
+                  <p id="problem-error" className="text-xs text-red-500 mt-1 font-medium" role="alert">
+                    {errors.problem}
+                  </p>
+                )}
               </div>
 
-              {/* Address */}
+              {/* Service Address */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                  {t("your_address")}
-                </label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label htmlFor="booking-address" className="text-sm font-semibold text-gray-700 dark:text-gray-300 block">
+                    {t("your_address")} <span className="text-red-500" aria-hidden="true">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={fillAddressWithCurrentLocation}
+                    disabled={fetchingAddress}
+                    className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {fetchingAddress ? (
+                      <span className="w-3 h-3 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <span>📍</span>
+                    )}
+                    {fetchingAddress ? "Locating..." : "Use Current Location"}
+                  </button>
+                </div>
                 <input
+                  id="booking-address"
                   type="text"
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder={t("address_placeholder")}
+                  onChange={(e) => handleFieldChange("address", e.target.value)}
+                  onBlur={() => handleFieldBlur("address")}
+                  placeholder="House No., Street, Area, Landmark (optional), City"
+                  className={`input-field ${touched.address && errors.address ? '!border-red-500 focus:!ring-red-500/20' : ''}`}
+                  aria-required="true"
+                  aria-invalid={touched.address && !!errors.address ? "true" : "false"}
+                  aria-describedby={touched.address && errors.address ? "address-error" : undefined}
+                />
+                {touched.address && errors.address && (
+                  <p id="address-error" className="text-xs text-red-500 mt-1 font-medium" role="alert">
+                    {errors.address}
+                  </p>
+                )}
+              </div>
+
+              {/* Landmark (Optional) */}
+              <div>
+                <label htmlFor="booking-landmark" className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                  Landmark <span className="text-gray-400 font-normal text-xs">(optional)</span>
+                </label>
+                <input
+                  id="booking-landmark"
+                  type="text"
+                  value={landmark}
+                  onChange={(e) => setLandmark(e.target.value)}
+                  placeholder="e.g. Near Apollo Hospital, opposite Metro Station"
                   className="input-field"
                 />
               </div>
 
-              {/* Scheduling */}
+              {/* Scheduling Details */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                    Date of Appointment <span className="text-red-500">*</span>
+                  <label htmlFor="booking-scheduledDate" className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                    Date of Appointment <span className="text-red-500" aria-hidden="true">*</span>
                   </label>
                   <input
+                    id="booking-scheduledDate"
                     type="date"
                     value={scheduledDate}
-                    onChange={e => setScheduledDate(e.target.value)}
+                    onChange={(e) => handleFieldChange("scheduledDate", e.target.value)}
+                    onBlur={() => handleFieldBlur("scheduledDate")}
                     min={new Date().toISOString().split("T")[0]}
-                    className="input-field text-sm"
+                    className={`input-field text-sm ${touched.scheduledDate && errors.scheduledDate ? '!border-red-500 focus:!ring-red-500/20' : ''}`}
+                    aria-required="true"
+                    aria-invalid={touched.scheduledDate && !!errors.scheduledDate ? "true" : "false"}
+                    aria-describedby={touched.scheduledDate && errors.scheduledDate ? "scheduledDate-error" : undefined}
                   />
+                  {touched.scheduledDate && errors.scheduledDate && (
+                    <p id="scheduledDate-error" className="text-xs text-red-500 mt-1 font-medium" role="alert">
+                      {errors.scheduledDate}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
-                    Time of Appointment <span className="text-red-500">*</span>
+                  <label htmlFor="booking-scheduledTime" className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                    Time of Appointment <span className="text-red-500" aria-hidden="true">*</span>
                   </label>
                   <select
+                    id="booking-scheduledTime"
                     value={scheduledTime}
-                    onChange={e => setScheduledTime(e.target.value)}
-                    className="input-field text-sm"
+                    onChange={(e) => handleFieldChange("scheduledTime", e.target.value)}
+                    onBlur={() => handleFieldBlur("scheduledTime")}
+                    className={`input-field text-sm ${touched.scheduledTime && errors.scheduledTime ? '!border-red-500 focus:!ring-red-500/20' : ''}`}
+                    aria-required="true"
+                    aria-invalid={touched.scheduledTime && !!errors.scheduledTime ? "true" : "false"}
+                    aria-describedby={touched.scheduledTime && errors.scheduledTime ? "scheduledTime-error" : undefined}
                   >
                     <option value="">Select a time</option>
                     {getTimeSlots().map(slot => (
                       <option key={slot.value} value={slot.value}>{slot.label}</option>
                     ))}
                   </select>
+                  {touched.scheduledTime && errors.scheduledTime && (
+                    <p id="scheduledTime-error" className="text-xs text-red-500 mt-1 font-medium" role="alert">
+                      {errors.scheduledTime}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Price info */}
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-between">
-                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">Estimated Cost</span>
-                <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
-                  ₹{provider.priceMin} – ₹{provider.priceMax}
-                </span>
+              {/* Special Instructions (Optional) */}
+              <div>
+                <label htmlFor="booking-specialInstructions" className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                  Special Instructions <span className="text-gray-400 font-normal text-xs">(optional)</span>
+                </label>
+                <textarea
+                  id="booking-specialInstructions"
+                  value={specialInstructions}
+                  onChange={(e) => setSpecialInstructions(e.target.value)}
+                  placeholder="e.g. Call before arriving, entrance through back gate"
+                  rows={2}
+                  className="input-field resize-none"
+                />
+              </div>
+
+              {/* Attach Photo (Optional) */}
+              <div>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  📸 Attach Photo <span className="text-gray-400 font-normal text-xs">(optional)</span>
+                </p>
+                <div className="flex gap-2 items-center">
+                  {bookingPhoto ? (
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                      <Image src={bookingPhoto} alt="attached issue photo" fill className="object-cover" sizes="64px" />
+                      <button
+                        type="button"
+                        onClick={() => setBookingPhoto(null)}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center text-white"
+                        aria-label="Remove attached photo"
+                      >
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-dashed border-purple-300 dark:border-purple-700 cursor-pointer hover:border-purple-500 transition-colors bg-purple-50/20 dark:bg-purple-900/10">
+                      {bookingPhotoUploading ? (
+                        <span className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/>
+                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                          <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                      )}
+                      <span className="text-xs text-purple-700 dark:text-purple-300 font-bold">
+                        {bookingPhotoUploading ? "Uploading..." : "Upload Photo"}
+                      </span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleBookingPhotoUpload} disabled={bookingPhotoUploading} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Price info & Disclaimer */}
+              <div className="space-y-1.5">
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-between">
+                  <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">Estimated Cost</span>
+                  <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                    ₹{provider.priceMin} – ₹{provider.priceMax}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 text-center italic">
+                  * Final price may vary depending on inspection and scope of work.
+                </p>
               </div>
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setBookingModalOpen(false)} className="btn-secondary flex-1">
+              <button onClick={() => setBookingModalOpen(false)} className="btn-secondary flex-1" disabled={bookingLoading}>
                 {t("cancel")}
               </button>
-              <button onClick={handleBook} disabled={bookingLoading} className="btn-primary flex-1">
+              <button
+                onClick={handleBook}
+                disabled={bookingLoading || bookingPhotoUploading}
+                className={`btn-primary flex-1 ${(!isFormValid() && !bookingLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
                 {bookingLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
