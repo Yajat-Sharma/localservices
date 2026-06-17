@@ -215,7 +215,7 @@ function LoginPageInner() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="input-field pr-12 placeholder:text-gray-400 dark:placeholder:text-slate-500"
+                  className="input-field pr-12"
                   onKeyDown={e => e.key === "Enter" && handleEmailLogin()}
                   style={{
                     color: "var(--text-input)",
@@ -327,7 +327,7 @@ function LoginPageInner() {
                     <input type="tel" value={phone}
                       onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
                       placeholder="9876543210" maxLength={10}
-                      className="input-field flex-1 placeholder:text-gray-400 dark:placeholder:text-slate-500"
+                      className="input-field flex-1"
                       style={{ color: "var(--text-input)", background: "var(--bg-input)" }}
                     />
                   </div>
