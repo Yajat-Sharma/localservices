@@ -214,13 +214,12 @@ function LoginPageInner() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder="••••••••••••"
                   className="input-field pr-12"
                   onKeyDown={e => e.key === "Enter" && handleEmailLogin()}
                   style={{
                     color: "var(--text-input)",
                     background: "var(--bg-input)",
-                    WebkitTextFillColor: "var(--text-input)",
                   }}
                 />
                 <button

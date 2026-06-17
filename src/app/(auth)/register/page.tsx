@@ -270,7 +270,6 @@ function RegisterPageInner() {
                       style={{
                         color: "var(--text-input)",
                         background: "var(--bg-input)",
-                        WebkitTextFillColor: "var(--text-input)",
                       }}
                     />
                     <button
