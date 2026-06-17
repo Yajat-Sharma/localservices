@@ -22,7 +22,7 @@ function HirePageInner() {
     return "Good Evening";
   }, []);
 
-  const formatName = useCallback((name: string) => {
+  const formatName = useCallback((name?: string | null) => {
     if (!name) return "";
     const first = name.trim().split(" ")[0];
     if (first.toUpperCase() === "YAJATKC") return "Yajat";
