@@ -15,6 +15,19 @@ function HirePageInner() {
   const { latitude, longitude, setLocation } = useLocationStore();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const getGreeting = useCallback(() => {
+    const hr = new Date().getHours();
+    if (hr < 12) return "Good Morning";
+    if (hr < 17) return "Good Afternoon";
+    return "Good Evening";
+  }, []);
+
+  const formatName = useCallback((name?: string | null) => {
+    if (!name) return "";
+    const first = name.trim().split(" ")[0];
+    if (first.toUpperCase() === "YAJATKC") return "Yajat";
+    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  }, []);
 
   const [categories, setCategories] = useState<any[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
@@ -45,7 +58,7 @@ function HirePageInner() {
     try {
       const res = await axios.get("/api/categories");
       setCategories(res.data.categories);
-    } catch {}
+    } catch { toast.error("Failed to load categories"); }
   }, []);
 
   useEffect(() => {
@@ -235,71 +248,65 @@ function HirePageInner() {
       )}
 
       {/* Hero Banner */}
-<div className="relative px-4 pt-6 pb-10 overflow-hidden"
-  style={{ background: "linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #be185d 100%)" }}>
-  {/* Pattern */}
-  <div className="absolute inset-0 opacity-10"
-    style={{ backgroundImage: "radial-gradient(white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
-  {/* Blobs */}
-  <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full opacity-20 blur-3xl"
-    style={{ background: "white" }} />
-  <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full opacity-15 blur-2xl"
-    style={{ background: "#f472b6" }} />
+      <div className="relative px-4 pt-4 pb-8 overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #be185d 100%)" }}>
+        {/* Pattern */}
+        <div className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: "radial-gradient(white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+        {/* Blobs */}
+        <div className="absolute -top-16 -right-16 w-36 h-36 rounded-full opacity-20 blur-2xl"
+          style={{ background: "white" }} />
+        <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full opacity-15 blur-xl"
+          style={{ background: "#f472b6" }} />
 
-  <div className="relative">
-    <p className="text-purple-200 text-sm font-medium mb-1">
-      {user ? "Hello 👋" : "Welcome 👋"}
-    </p>
-    <h2 className="text-white font-black text-2xl leading-tight tracking-tight mb-4">
-      {user ? (
-        <>{user?.name?.split(" ")[0] || "there"},<br />
-        <span className="text-purple-200">what do you need today?</span></>
-      ) : (
-        <>Browse services,<br />
-        <span className="text-purple-200">no sign-in needed!</span></>
-      )}
-    </h2>
+        <div className="relative">
+          <span className="text-xs font-bold uppercase tracking-wider text-purple-200/90 block mb-1">
+            👋 {user ? `${getGreeting()}, ${formatName(user.name)}` : "Welcome"}
+          </span>
+          <h2 className="text-white font-extrabold text-xl tracking-tight leading-tight">
+            Find trusted professionals near you
+          </h2>
 
-    {/* Active filters */}
-    {activeFiltersCount > 0 && (
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide mt-3">
-        {filters.availableOnly && (
-          <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
-            style={{ background: "rgba(255,255,255,0.2)" }}>Available</span>
-        )}
-        {filters.verifiedOnly && (
-          <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
-            style={{ background: "rgba(255,255,255,0.2)" }}>Verified</span>
-        )}
-        {filters.minRating > 0 && (
-          <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
-            style={{ background: "rgba(255,255,255,0.2)" }}>⭐ {filters.minRating}+</span>
-        )}
-        {filters.maxPrice < 10000 && (
-          <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
-            style={{ background: "rgba(255,255,255,0.2)" }}>₹{filters.maxPrice} max</span>
-        )}
-        <button
-          onClick={() => setFilters({ minRating: 0, maxPrice: 10000, availableOnly: false, verifiedOnly: false, radius: 5, sortBy: "distance" })}
-          className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
-          style={{ background: "rgba(239,68,68,0.5)" }}>
-          Clear all
-        </button>
+          {/* Active filters */}
+          {activeFiltersCount > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide mt-3">
+              {filters.availableOnly && (
+                <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+                  style={{ background: "rgba(255,255,255,0.2)" }}>Available</span>
+              )}
+              {filters.verifiedOnly && (
+                <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+                  style={{ background: "rgba(255,255,255,0.2)" }}>Verified</span>
+              )}
+              {filters.minRating > 0 && (
+                <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+                  style={{ background: "rgba(255,255,255,0.2)" }}>⭐ {filters.minRating}+</span>
+              )}
+              {filters.maxPrice < 10000 && (
+                <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+                  style={{ background: "rgba(255,255,255,0.2)" }}>₹{filters.maxPrice} max</span>
+              )}
+              <button
+                onClick={() => setFilters({ minRating: 0, maxPrice: 10000, availableOnly: false, verifiedOnly: false, radius: 5, sortBy: "distance" })}
+                className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white"
+                style={{ background: "rgba(239,68,68,0.5)" }}>
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    )}
-  </div>
-</div>
 
 {/* Categories card — overlapping hero */}
-<div className="px-4 -mt-5 relative z-10">
-  <div className="rounded-3xl p-3 overflow-x-auto"
+<div className="px-4 -mt-6 relative z-10">
+  <div className="rounded-3xl p-2.5 overflow-x-auto"
     style={{ background: "var(--bg-card)", boxShadow: "0 8px 32px rgba(124,58,237,0.12)", border: "1px solid var(--border)" }}>
     <div className="grid grid-cols-4 gap-2 min-w-0">
       {categories.map(cat => (
         <button
           key={cat.id}
           onClick={() => setSelectedCategory(prev => prev === cat.slug ? null : cat.slug)}
-          className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl transition-all duration-200 active:scale-95"
+          className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 active:scale-95"
           style={selectedCategory === cat.slug ? {
             background: "linear-gradient(135deg, #7c3aed, #ec4899)",
             boxShadow: "0 4px 16px rgba(124,58,237,0.35)",
@@ -317,7 +324,7 @@ function HirePageInner() {
     </div>
   </div>
 </div>
-      <div className="px-4 py-4 space-y-5 pb-24">
+      <div className="px-4 py-3 space-y-4 pb-24">
         {/* Sort bar */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
           <span className="text-xs text-gray-500 font-medium flex-shrink-0">Sort:</span>

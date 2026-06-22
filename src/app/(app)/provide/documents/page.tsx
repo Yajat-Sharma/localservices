@@ -30,7 +30,7 @@ export default function DocumentsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProvider(res.data.provider);
-    } catch {}
+    } catch { toast.error("Failed to load documents"); }
   };
 
   const handleFileChange = (

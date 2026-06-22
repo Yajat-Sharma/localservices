@@ -24,7 +24,7 @@ export default function ChatPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessages(res.data.messages);
-    } catch { }
+    } catch { toast.error("Failed to load messages"); }
   }, [id]);
 
   const initChat = useCallback(async () => {

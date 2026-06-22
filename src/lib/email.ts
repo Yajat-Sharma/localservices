@@ -24,7 +24,7 @@ export async function sendEmail({
       subject,
       html,
     });
-    console.log(`Email sent to ${to}: ${subject}`);
+    // Email sent successfully (no logging to avoid leaking PII)
   } catch (err) {
     console.error("Email send error:", err);
     // Don't throw — email failure shouldn't break the API
