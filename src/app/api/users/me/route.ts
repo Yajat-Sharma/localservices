@@ -2,13 +2,14 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest, invalidateUserCache } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 
 export async function PATCH(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { name, language, phone } = await req.json();
-  const updateData: any = {};
+  const updateData: Prisma.UserUpdateInput = {};
 
   if (name !== undefined) updateData.name = name;
   if (language !== undefined) updateData.language = language;
