@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { haversineDistance } from "@/lib/geo";
+import { Prisma } from "@prisma/client";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const lat = parseFloat(searchParams.get("lat") || "0");
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
   const radius = parseFloat(searchParams.get("radius") || "5");
   const category = searchParams.get("category");
   const search = searchParams.get("search");
-  const where: any = { isApproved: true };
+  const where: Prisma.ProviderWhereInput = { isApproved: true };
   if (category) where.category = { slug: category };
   if (search) where.OR = [{ businessName: { contains: search, mode: "insensitive" } }, { description: { contains: search, mode: "insensitive" } }];
   const providers = await prisma.provider.findMany({

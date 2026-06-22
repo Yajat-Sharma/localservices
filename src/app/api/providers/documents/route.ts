@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { uploadImage } from "@/lib/cloudinary";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { Prisma } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     const idProof = formData.get("idProof") as File | null;
     const license = formData.get("license") as File | null;
 
-    const updateData: any = {};
+    const updateData: Prisma.ProviderUpdateInput = {};
 
     if (idProof) {
       const bytes = await idProof.arrayBuffer();

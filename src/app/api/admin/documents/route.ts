@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequest(req);
@@ -30,7 +31,7 @@ export async function PATCH(req: NextRequest) {
   if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { providerId, idProofStatus, licenseStatus, reason } = await req.json();
-  const updateData: any = {};
+  const updateData: Prisma.ProviderUpdateInput = {};
   if (idProofStatus) updateData.idProofStatus = idProofStatus;
   if (licenseStatus) updateData.licenseStatus = licenseStatus;
 

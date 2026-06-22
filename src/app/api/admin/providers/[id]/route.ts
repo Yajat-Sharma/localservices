@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 
 export async function PATCH(
   req: NextRequest,
@@ -13,7 +14,7 @@ export async function PATCH(
   if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { isApproved, isVerified } = await req.json();
-  const updateData: any = {};
+  const updateData: Prisma.ProviderUpdateInput = {};
   if (isApproved !== undefined) updateData.isApproved = isApproved;
   if (isVerified !== undefined) updateData.isVerified = isVerified;
 

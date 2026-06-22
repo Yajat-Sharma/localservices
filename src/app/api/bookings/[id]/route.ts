@@ -5,6 +5,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import nodemailer from "nodemailer";
 import { createNotification } from "@/lib/notifications";
 import { sendSMS, SMS_TEMPLATES } from "@/lib/sms";
+import { Prisma } from "@prisma/client";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -41,7 +42,7 @@ export async function PATCH(
   const isCustomer = user.id === booking.customerId;
   if (!isProvider && !isCustomer) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const updateData: any = {};
+  const updateData: Prisma.BookingUpdateInput = {};
   if (status) updateData.status = status;
   if (price && isProvider) updateData.price = price;
   if (status === "COMPLETED") updateData.completedAt = new Date();
