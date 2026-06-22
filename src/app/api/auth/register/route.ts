@@ -3,10 +3,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { checkRateLimit, getClientIp, AUTH_RATE_LIMIT } from "@/lib/rate-limit";
 
-const ADMIN_EMAIL = "yajats@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "yajats@gmail.com";
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  const { limited, retryAfter } = checkRateLimit(`register:${ip}`, AUTH_RATE_LIMIT);
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many registration attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
+  }
   try {
     const { name, email, password } = await req.json();
 

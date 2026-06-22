@@ -29,7 +29,7 @@ export default function PortfolioPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPortfolio(res.data.provider?.portfolio || []);
-    } catch {}
+    } catch { toast.error("Failed to load portfolio"); }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

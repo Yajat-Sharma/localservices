@@ -58,7 +58,7 @@ function HirePageInner() {
     try {
       const res = await axios.get("/api/categories");
       setCategories(res.data.categories);
-    } catch {}
+    } catch { toast.error("Failed to load categories"); }
   }, []);
 
   useEffect(() => {

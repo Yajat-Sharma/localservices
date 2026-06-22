@@ -16,7 +16,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
   setUser: (user) => set({ user }),
   setLoading: (isLoading) => set({ isLoading }),
   // Clear both cookie (SSR middleware) and localStorage (client-side API calls).
-  logout: () => { document.cookie = "auth_token=; Max-Age=0; path=/"; localStorage.removeItem("auth_token"); set({ user: null }); },
+  logout: () => {
+    if (typeof window !== "undefined") {
+      document.cookie = "auth_token=; Max-Age=0; path=/";
+      localStorage.removeItem("auth_token");
+    }
+    set({ user: null });
+  },
 }));
 
 interface LocationStore { latitude: number | null; longitude: number | null; address: string; setLocation: (lat: number, lng: number, address?: string) => void; }

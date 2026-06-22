@@ -5,6 +5,7 @@ import { TopNav } from "@/components/shared/TopNav";
 import { useAuthStore } from "@/lib/store";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function EarningsPage() {
   const { user } = useAuthStore();
@@ -25,7 +26,7 @@ export default function EarningsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBookings(res.data.bookings);
-    } catch {} finally { setLoading(false); }
+    } catch { toast.error("Failed to load earnings"); } finally { setLoading(false); }
   };
 
   const completedBookings = bookings.filter(b => b.status === "COMPLETED");

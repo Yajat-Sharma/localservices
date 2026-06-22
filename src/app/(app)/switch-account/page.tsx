@@ -37,7 +37,7 @@ export default function SwitchAccountPage() {
     try {
       const res = await axios.get("/api/providers/me/details");
       setProviderStatus(res.data.provider);
-    } catch {}
+    } catch { toast.error("Failed to check provider status"); }
   };
 
   const handleSwitchRole = async (role: string) => {

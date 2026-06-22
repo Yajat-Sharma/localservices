@@ -3,8 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  const { limited, retryAfter } = checkRateLimit(`forgot-pw:${ip}`, { maxRequests: 3, windowSeconds: 60 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many reset attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
+  }
   try {
     const { email } = await req.json();
     if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });

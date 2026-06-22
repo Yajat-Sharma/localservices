@@ -51,6 +51,16 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
+    // Enforce admin role for /admin routes (defense-in-depth)
+    if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+      if (payload.role !== "ADMIN") {
+        if (pathname.startsWith("/api/")) {
+          return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+        }
+        return NextResponse.redirect(new URL("/hire", req.url));
+      }
+    }
+
     // Add userId header for downstream usage
     const requestHeaders = new Headers(req.headers);
     requestHeaders.set("x-user-id", payload.userId as string);

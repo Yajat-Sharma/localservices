@@ -19,7 +19,7 @@ export async function sendSMS(to: string, message: string) {
       to: phone,
     });
 
-    console.log(`SMS sent to ${phone}`);
+    // SMS sent successfully (no logging to avoid leaking PII)
   } catch (err) {
     console.error("SMS error:", err);
     // Don't throw — SMS failure shouldn't break the app
