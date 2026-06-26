@@ -38,15 +38,24 @@ export async function GET(req: NextRequest) {
     },
     orderBy: [{ avgRating: "desc" }],
   });
+
+  console.log(`[API] User coordinates received: lat=${lat}, lng=${lng}, radius=${radius}`);
+  console.log(`[API] Number of providers returned by DB: ${providers.length}`);
+
   const now = new Date();
   const filtered = providers.map((p) => {
     const distance = lat && lng ? haversineDistance(lat, lng, p.latitude, p.longitude) : null;
     const isAvailable = p.isAvailable && (!p.unavailableUntil || p.unavailableUntil < now);
     return { ...p, distance, isAvailable };
-  }).filter((p) => !lat || !lng || p.distance === null || p.distance <= radius)
-    .sort((a, b) => (a.distance ?? 99) - (b.distance ?? 99));
-  return NextResponse.json({ providers: filtered });
+  });
+
+  const distanceFiltered = filtered.filter((p) => !lat || !lng || p.distance === null || p.distance <= radius);
+  console.log(`[API] Number after distance calculation: ${distanceFiltered.length}`);
+
+  distanceFiltered.sort((a, b) => (a.distance ?? 99) - (b.distance ?? 99));
+  return NextResponse.json({ providers: distanceFiltered });
 }
+
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -61,4 +70,3 @@ export async function POST(req: NextRequest) {
   await prisma.user.update({ where: { id: user.id }, data: { role: "PROVIDER" } });
   return NextResponse.json({ provider });
 }
-

@@ -7,6 +7,7 @@ import { useAuthStore } from "@/lib/store";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "@/types";
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -47,13 +48,13 @@ export default function ProfilePage() {
     if (newPhone && newPhone.length !== 10) { toast.error("Enter valid 10-digit number"); return; }
     setLoading(true);
     try {
-      const updateData: any = { name };
+      const updateData: Record<string, string> = { name };
       if (newPhone) updateData.phone = `+91${newPhone}`;
       const res = await axios.patch("/api/users/me", updateData);
       setUser({ ...user!, name: res.data.user.name, phone: res.data.user.phone });
       toast.success("Profile updated!");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to save");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to save"));
     } finally { setLoading(false); }
   };
 

@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import axios from "axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { BookingListItem, ProviderDetail } from "@/types";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "#f59e0b",
@@ -29,7 +30,7 @@ export default function ProviderDashboardPage() {
   const { t } = useLanguage();
   const { user, isLoading } = useAuthStore();
   const router = useRouter();
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<BookingListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"overview" | "bookings">("overview");
 
@@ -58,7 +59,7 @@ export default function ProviderDashboardPage() {
     } catch { toast.error("Failed to update status"); }
   };
 
-  const provider = user?.provider as any;
+  const provider = user?.provider as unknown as ProviderDetail | undefined;
   const completed = bookings.filter(b => b.status === "COMPLETED");
   const pending = bookings.filter(b => b.status === "PENDING");
   const active = bookings.filter(b => !["COMPLETED", "CANCELLED"].includes(b.status));
@@ -80,7 +81,7 @@ export default function ProviderDashboardPage() {
   }) : [];
 
   const statusBreakdown = Object.entries(
-    bookings.reduce((acc: any, b) => {
+    bookings.reduce((acc: Record<string, number>, b: BookingListItem) => {
       acc[b.status] = (acc[b.status] || 0) + 1;
       return acc;
     }, {})
@@ -329,7 +330,7 @@ export default function ProviderDashboardPage() {
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>Bookings from customers will appear here</p>
               </div>
             ) : (
-              bookings.map((booking: any) => {
+              bookings.map((booking: BookingListItem) => {
                 const color = STATUS_COLORS[booking.status] || "#94a3b8";
                 const label = STATUS_LABELS[booking.status] || booking.status;
                 return (

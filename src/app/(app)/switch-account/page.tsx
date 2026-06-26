@@ -5,6 +5,7 @@ import { TopNav } from "@/components/shared/TopNav";
 import { useAuthStore, useLocationStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { Category, ProviderStatusInfo, getErrorMessage } from "@/types";
 
 export default function SwitchAccountPage() {
   const { user, setUser } = useAuthStore();
@@ -12,8 +13,8 @@ export default function SwitchAccountPage() {
   const router = useRouter();
   const [step, setStep] = useState<"choose" | "register" | "pending">("choose");
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [providerStatus, setProviderStatus] = useState<any>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [providerStatus, setProviderStatus] = useState<ProviderStatusInfo | null>(null);
 
   const [form, setForm] = useState({
     businessName: "", categoryId: "", description: "",
@@ -51,8 +52,8 @@ export default function SwitchAccountPage() {
       if (role === "PROVIDER") router.replace("/provide/dashboard");
       else if (role === "ADMIN") router.replace("/admin");
       else router.replace("/hire");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to switch");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to switch"));
     } finally { setLoading(false); }
   };
 
@@ -71,8 +72,8 @@ export default function SwitchAccountPage() {
       toast.success("Provider profile created! Awaiting admin approval.");
       setStep("pending");
       checkProviderStatus();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to register");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to register"));
     } finally { setLoading(false); }
   };
 

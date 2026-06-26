@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { ProviderDetail, CategoryCount } from "@/types";
 
 const COLORS = ["#0c8ee8", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 const FUNNEL_COLORS = ["#94a3b8", "#60a5fa", "#f59e0b", "#10b981", "#ef4444"];
@@ -20,12 +21,12 @@ export default function AdminPage() {
   const { user } = useAuthStore();
   const router = useRouter();
   const [stats, setStats] = useState({ users: 0, providers: 0, bookings: 0, pendingProviders: 0 });
-  const [pendingProviders, setPendingProviders] = useState<any[]>([]);
-  const [allProviders, setAllProviders] = useState<any[]>([]);
-  const [docProviders, setDocProviders] = useState<any[]>([]);
+  const [pendingProviders, setPendingProviders] = useState<ProviderDetail[]>([]);
+  const [allProviders, setAllProviders] = useState<ProviderDetail[]>([]);
+  const [docProviders, setDocProviders] = useState<ProviderDetail[]>([]);
   const [tab, setTab] = useState<"stats" | "pending" | "all" | "documents" | "analytics">("stats");
   const [loading, setLoading] = useState(true);
-  const [viewingProvider, setViewingProvider] = useState<any>(null);
+  const [viewingProvider, setViewingProvider] = useState<ProviderDetail | null>(null);
   const [analytics, setAnalytics] = useState<{
     bookingsPerDay: { date: string; count: number }[];
     revenueByCategory: { name: string; icon: string; revenue: number; bookings: number }[];
@@ -109,7 +110,7 @@ export default function AdminPage() {
       toast.success(status === "APPROVED" ? "Document approved!" : "Document rejected");
       fetchData();
       if (viewingProvider && viewingProvider.id === providerId) {
-        setViewingProvider((prev: any) => ({ ...prev, [type]: status }));
+        setViewingProvider((prev: ProviderDetail | null) => prev ? { ...prev, [type]: status } : null);
       }
     } catch { toast.error("Failed"); }
   };
@@ -121,7 +122,7 @@ export default function AdminPage() {
     { name: "Pending", value: stats.pendingProviders, color: "#ef4444" },
   ];
 
-  const categoryData = allProviders.reduce((acc: any[], p) => {
+  const categoryData = allProviders.reduce((acc: CategoryCount[], p) => {
     const cat = p.category?.name || "Other";
     const existing = acc.find(a => a.name === cat);
     if (existing) existing.value++;
@@ -133,7 +134,7 @@ export default function AdminPage() {
     p.idProofStatus === "PENDING" || p.licenseStatus === "PENDING"
   ).length;
 
-  const ProviderCard = ({ prov, showApprove = false }: { prov: any; showApprove?: boolean }) => (
+  const ProviderCard = ({ prov, showApprove = false }: { prov: ProviderDetail; showApprove?: boolean }) => (
     <div className="card p-4">
       <div className="flex items-start gap-3">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center text-xl flex-shrink-0">
@@ -289,7 +290,7 @@ export default function AdminPage() {
                     <PieChart>
                       <Pie data={categoryData} cx="50%" cy="50%" outerRadius={70} dataKey="value"
                         label={({ percent }) => typeof percent === "number" ? `${(percent * 100).toFixed(0)}%` : ""} labelLine={false}>
-                        {categoryData.map((_: any, index: number) => (
+                        {categoryData.map((_: unknown, index: number) => (
                           <Cell key={index} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -297,7 +298,7 @@ export default function AdminPage() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="flex-1 space-y-2">
-                    {categoryData.map((cat: any, i: number) => (
+                    {categoryData.map((cat: CategoryCount, i: number) => (
                       <div key={cat.name} className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                         <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{cat.name}</span>
@@ -420,13 +421,13 @@ export default function AdminPage() {
                         <Tooltip
                           contentStyle={{ background: "#1e293b", border: "none", borderRadius: "12px", fontSize: "12px" }}
                           labelStyle={{ color: "#94a3b8" }}
-                          formatter={(value: any, name?: any) => [
+                          formatter={(value: any, name: any) => [
                             name === "revenue" ? `₹${Number(value).toLocaleString("en-IN")}` : value,
                             name === "revenue" ? "Revenue" : "Bookings",
                           ]}
                         />
                         <Bar dataKey="revenue" radius={[0, 6, 6, 0]} name="revenue">
-                          {analytics.revenueByCategory.map((_: any, index: number) => (
+                          {analytics.revenueByCategory.map((_: unknown, index: number) => (
                             <Cell key={index} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Bar>
@@ -573,7 +574,7 @@ export default function AdminPage() {
                 </p>
               </div>
             ) : (
-              (tab === "pending" ? pendingProviders : allProviders).map((prov: any) => (
+              (tab === "pending" ? pendingProviders : allProviders).map((prov: ProviderDetail) => (
                 <ProviderCard key={prov.id} prov={prov} showApprove={tab === "pending"} />
               ))
             )}

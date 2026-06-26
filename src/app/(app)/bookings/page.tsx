@@ -7,12 +7,13 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { BookingListItem, StatusConfig } from "@/types";
 
 export default function BookingsPage() {
   const { t } = useLanguage();
   const { user, isLoading } = useAuthStore();
   const router = useRouter();
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<BookingListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export default function BookingsPage() {
   const historyBookings = bookings.filter(b => ["COMPLETED", "CANCELLED"].includes(b.status));
   const displayed = activeTab === "active" ? activeBookings : historyBookings;
 
-  const statusConfig: any = {
+  const statusConfig: Record<string, StatusConfig> = {
     PENDING:     { bg: "rgba(245,158,11,0.1)",  color: "#d97706", label: "Pending",     dot: "#f59e0b" },
     ACCEPTED:    { bg: "rgba(124,58,237,0.1)",  color: "#7c3aed", label: "Accepted",    dot: "#7c3aed" },
     IN_PROGRESS: { bg: "rgba(236,72,153,0.1)",  color: "#ec4899", label: "In Progress", dot: "#ec4899" },
@@ -138,7 +139,7 @@ export default function BookingsPage() {
         )}
 
         {/* Booking cards */}
-        {!loading && displayed.map((booking: any) => {
+        {!loading && displayed.map((booking: BookingListItem) => {
           const st = statusConfig[booking.status] || statusConfig.PENDING;
           const isUpdating = updatingId === booking.id;
 

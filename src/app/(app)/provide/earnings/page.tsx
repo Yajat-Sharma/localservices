@@ -6,11 +6,12 @@ import { useAuthStore } from "@/lib/store";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { BookingListItem, MonthlyEarning } from "@/types";
 
 export default function EarningsPage() {
   const { user } = useAuthStore();
   const router = useRouter();
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<BookingListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function EarningsPage() {
   const thisMonthEarnings = thisMonthBookings.reduce((sum, b) => sum + (b.price || 0), 0);
 
   // Monthly earnings chart data
-  const monthlyData = completedBookings.reduce((acc: any[], b) => {
+  const monthlyData = completedBookings.reduce((acc: MonthlyEarning[], b: BookingListItem) => {
     const date = new Date(b.completedAt || b.createdAt);
     const month = date.toLocaleString("en-IN", { month: "short", year: "2-digit" });
     const existing = acc.find(a => a.month === month);

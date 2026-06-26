@@ -6,13 +6,14 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore, useLocationStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { Category, User, getErrorMessage } from "@/types";
 
 export default function ProviderRegisterPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const { user, setUser, isLoading } = useAuthStore();
   const { latitude, longitude, setLocation } = useLocationStore();
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [freeSlots, setFreeSlots] = useState(50);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ businessName:"", categoryId:"", description:"", priceMin:"", priceMax:"", address:"", city:"", state:"", pincode:"", whatsapp:"", allowMultiple:false });
@@ -35,10 +36,10 @@ export default function ProviderRegisterPage() {
     const token = localStorage.getItem("auth_token");
     try {
       const res = await axios.post("/api/providers", { ...form, priceMin: Number(form.priceMin), priceMax: Number(form.priceMax), latitude, longitude }, { headers: { Authorization: `Bearer ${token}` } });
-      setUser({ ...user!, provider: res.data.provider } as any);
+      setUser({ ...user!, provider: res.data.provider } as User);
       toast.success(t("registration_success"));
       router.replace("/provide/dashboard");
-    } catch (err: any) { toast.error(err.response?.data?.message || "Registration failed"); }
+    } catch (err: unknown) { toast.error(getErrorMessage(err, "Registration failed")); }
     finally { setLoading(false); }
   };
 

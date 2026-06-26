@@ -6,6 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { ProviderDetail, User, getErrorMessage } from "@/types";
 
 export default function ProviderEditPage() {
   const { t } = useLanguage();
@@ -29,7 +30,7 @@ export default function ProviderEditPage() {
   useEffect(() => {
     if (!user) { router.replace("/login"); return; }
     if (!user.provider) { router.replace("/provide/register"); return; }
-    const p = user.provider as any;
+    const p = user.provider as unknown as ProviderDetail;
     setForm({
       description: p.description || "",
       priceMin: String(p.priceMin || ""),
@@ -38,7 +39,7 @@ export default function ProviderEditPage() {
       // Pre-fill phone from user record, strip +91 prefix for the input
       phone: (user.phone || "").replace(/^\+91/, ""),
       allowMultiple: p.allowMultiple || false,
-      workingHours: p.workingHours || { startHour: 8, endHour: 18, days: [1,2,3,4,5,6] },
+      workingHours: (p.workingHours as { startHour: number; endHour: number; days: number[] }) || { startHour: 8, endHour: 18, days: [1,2,3,4,5,6] },
     });
   }, [user, router]);
 
@@ -67,15 +68,15 @@ export default function ProviderEditPage() {
       const newPhone = form.phone ? `+91${form.phone}` : undefined;
       if (newPhone && newPhone !== user!.phone) {
         const userRes = await axios.patch("/api/users/me", { phone: newPhone });
-        setUser({ ...user!, phone: userRes.data.user.phone, provider: { ...user!.provider!, ...res.data.provider } } as any);
+        setUser({ ...user!, phone: userRes.data.user.phone, provider: { ...user!.provider!, ...res.data.provider } } as User);
       } else {
-        setUser({ ...user!, provider: { ...user!.provider!, ...res.data.provider } } as any);
+        setUser({ ...user!, provider: { ...user!.provider!, ...res.data.provider } } as User);
       }
 
       toast.success("Profile updated!");
       router.replace("/provide/dashboard");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to update profile");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to update profile"));
     } finally {
       setLoading(false);
     }
@@ -94,16 +95,16 @@ export default function ProviderEditPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Business Name</span>
-              <span className="font-medium">{(user.provider as any).businessName}</span>
+              <span className="font-medium">{(user.provider as unknown as ProviderDetail).businessName}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Category</span>
-              <span className="font-medium">{(user.provider as any).category?.name}</span>
+              <span className="font-medium">{(user.provider as unknown as ProviderDetail).category?.name}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Status</span>
-              <span className={`tag ${(user.provider as any).isApproved ? "tag-green" : "tag-orange"}`}>
-                {(user.provider as any).isApproved ? "✓ Approved" : "⏳ Pending"}
+              <span className={`tag ${(user.provider as unknown as ProviderDetail).isApproved ? "tag-green" : "tag-orange"}`}>
+                {(user.provider as unknown as ProviderDetail).isApproved ? "✓ Approved" : "⏳ Pending"}
               </span>
             </div>
           </div>

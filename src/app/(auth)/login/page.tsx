@@ -3,8 +3,10 @@ import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { auth, RecaptchaVerifier, signInWithPhoneNumber, googleProvider, signInWithPopup } from "@/lib/firebase";
+import { ConfirmationResult } from "firebase/auth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
+import { User, getErrorMessage } from "@/types";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import axios from "axios";
@@ -23,7 +25,7 @@ function LoginPageInner() {
   const [step, setStep] = useState("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(true);
@@ -36,7 +38,7 @@ function LoginPageInner() {
     }
   }, [countdown]);
 
-  const saveSession = (token: string, user: any) => {
+  const saveSession = (token: string, user: User) => {
     const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
     const maxAge = keepSignedIn ? `; max-age=${30 * 24 * 60 * 60}` : "";
     // Cookie for SSR middleware; localStorage for client-side API calls across the app.
@@ -61,9 +63,9 @@ function LoginPageInner() {
       const res = await axios.post("/api/auth/google", { firebaseToken });
       saveSession(res.data.token, res.data.user);
       toast.success("Welcome to LocalServices!");
-    } catch (err: any) {
-      if (err.code !== "auth/popup-closed-by-user") {
-        toast.error(err.response?.data?.error || "Google sign-in failed");
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "auth/popup-closed-by-user") {
+        toast.error(getErrorMessage(err, "Google sign-in failed"));
       }
     } finally { setLoading(false); }
   };
@@ -75,16 +77,17 @@ function LoginPageInner() {
       const res = await axios.post("/api/auth/email-login", { email, password });
       saveSession(res.data.token, res.data.user);
       toast.success("Welcome back!");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Invalid email or password");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Invalid email or password"));
     } finally { setLoading(false); }
   };
 
   const clearRecaptcha = () => {
     try {
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.clear();
-        (window as any).recaptchaVerifier = null;
+      const win = window as unknown as { recaptchaVerifier?: { clear: () => void } | null };
+      if (win.recaptchaVerifier && typeof win.recaptchaVerifier.clear === "function") {
+        win.recaptchaVerifier.clear();
+        win.recaptchaVerifier = null;
       }
     } catch { }
     if (recaptchaRef.current) recaptchaRef.current.innerHTML = "";
@@ -97,13 +100,14 @@ function LoginPageInner() {
       const verifier = new RecaptchaVerifier(auth, recaptchaRef.current!, {
         size: "invisible", callback: () => { }, "expired-callback": () => { clearRecaptcha(); }
       });
-      (window as any).recaptchaVerifier = verifier;
+      const win = window as unknown as { recaptchaVerifier?: typeof verifier };
+      win.recaptchaVerifier = verifier;
       await verifier.render();
       const result = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
       setConfirmationResult(result); setStep("otp"); setCountdown(60);
       toast.success(t("otp_sent"));
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send OTP"); clearRecaptcha();
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to send OTP")); clearRecaptcha();
     } finally { setLoading(false); }
   };
 
@@ -112,6 +116,7 @@ function LoginPageInner() {
     if (otpStr.length !== 6) return;
     setLoading(true);
     try {
+      if (!confirmationResult) throw new Error("No confirmation result");
       const result = await confirmationResult.confirm(otpStr);
       const firebaseToken = await result.user.getIdToken();
       const res = await axios.post("/api/auth/login", { firebaseToken, phone: result.user.phoneNumber });

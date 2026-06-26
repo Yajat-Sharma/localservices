@@ -6,6 +6,7 @@ import { TopNav } from "@/components/shared/TopNav";
 import { useAuthStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "@/types";
 
 export default function PortfolioPage() {
   const { user, setUser } = useAuthStore();
@@ -69,8 +70,8 @@ export default function PortfolioPage() {
       setFiles([]);
       setPreviews([]);
       toast.success(`${res.data.urls.length} photo(s) uploaded!`);
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Upload failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Upload failed"));
     } finally {
       setUploading(false);
     }

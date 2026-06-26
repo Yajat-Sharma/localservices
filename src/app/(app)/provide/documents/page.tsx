@@ -6,6 +6,7 @@ import { TopNav } from "@/components/shared/TopNav";
 import { useAuthStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { ProviderDetail, getErrorMessage } from "@/types";
 
 export default function DocumentsPage() {
   const { user, setUser } = useAuthStore();
@@ -15,7 +16,7 @@ export default function DocumentsPage() {
   const [idPreview, setIdPreview] = useState<string | null>(null);
   const [licensePreview, setLicensePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [provider, setProvider] = useState<any>(null);
+  const [provider, setProvider] = useState<ProviderDetail | null>(null);
 
   useEffect(() => {
     if (!user) { router.replace("/login"); return; }
@@ -79,8 +80,8 @@ export default function DocumentsPage() {
 
       toast.success("Documents uploaded! Admin will review shortly.");
       router.replace("/provide/dashboard");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Upload failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Upload failed"));
     } finally {
       setLoading(false);
     }

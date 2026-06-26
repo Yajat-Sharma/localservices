@@ -15,8 +15,11 @@ export async function POST(req: NextRequest) {
     if (files.length > 6) return NextResponse.json({ error: "Max 6 photos" }, { status: 400 });
 
     const urls: string[] = [];
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    
     for (const file of files) {
       if (file.size > 5 * 1024 * 1024) continue;
+      if (!validTypes.includes(file.type)) continue;
       const bytes = await file.arrayBuffer();
       const base64 = `data:${file.type};base64,${Buffer.from(bytes).toString("base64")}`;
       const url = await uploadImage(base64, `localservices/portfolio/${user.id}`);

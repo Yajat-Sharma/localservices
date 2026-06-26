@@ -12,6 +12,11 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("avatar") as File | null;
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      return NextResponse.json({ error: "Invalid file type. Only JPEG, PNG, and WebP are allowed." }, { status: 400 });
+    }
     if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: "File too large. Max 5MB" }, { status: 400 });
 
     const bytes = await file.arrayBuffer();

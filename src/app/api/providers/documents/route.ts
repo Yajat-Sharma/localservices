@@ -16,6 +16,15 @@ export async function POST(req: NextRequest) {
     const idProof = formData.get("idProof") as File | null;
     const license = formData.get("license") as File | null;
 
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    
+    if (idProof && !validTypes.includes(idProof.type)) {
+      return NextResponse.json({ error: "Invalid ID proof type. Allowed: JPEG, PNG, WEBP, PDF." }, { status: 400 });
+    }
+    if (license && !validTypes.includes(license.type)) {
+      return NextResponse.json({ error: "Invalid license type. Allowed: JPEG, PNG, WEBP, PDF." }, { status: 400 });
+    }
+
     const updateData: Prisma.ProviderUpdateInput = {};
 
     if (idProof) {

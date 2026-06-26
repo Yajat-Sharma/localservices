@@ -1,13 +1,23 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 import { TopNav } from "@/components/shared/TopNav";
 import { ProviderCard } from "@/components/provider/ProviderCard";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore, useLocationStore } from "@/lib/store";
+import { Category, ProviderListItem } from "@/types";
 import axios from "axios";
 import toast from "react-hot-toast";
+
+interface SpeechRecognitionEvent { results: { transcript: string }[][]; }
+interface SpeechRecognitionError { error: string; }
+interface SpeechRecognitionObj {
+  lang: string; continuous: boolean; interimResults: boolean; maxAlternatives: number;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionError) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+}
 
 function HirePageInner() {
   const { t, language } = useLanguage();
@@ -29,14 +39,15 @@ function HirePageInner() {
     return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
   }, []);
 
-  const [categories, setCategories] = useState<any[]>([]);
-  const [providers, setProviders] = useState<any[]>([]);
-  const [topProviders, setTopProviders] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [providers, setProviders] = useState<ProviderListItem[]>([]);
+  const [topProviders, setTopProviders] = useState<ProviderListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category") || null);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<'pending' | 'available' | 'unavailable'>('pending');
 
   const [filters, setFilters] = useState({
     minRating: 0,
@@ -48,9 +59,19 @@ function HirePageInner() {
   });
 
   const getUserLocation = useCallback(() => {
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => setLocation(pos.coords.latitude, pos.coords.longitude),
-      () => setLocation(19.0760, 72.8777, "Mumbai")
+    setLocationStatus('pending');
+    if (!navigator.geolocation) {
+      setLocationStatus('unavailable');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation(pos.coords.latitude, pos.coords.longitude);
+        setLocationStatus('available');
+      },
+      () => {
+        setLocationStatus('unavailable');
+      }
     );
   }, [setLocation]);
 
@@ -67,27 +88,46 @@ function HirePageInner() {
   }, [fetchCategories, getUserLocation]);
 
   const fetchProviders = useCallback(async () => {
-    if (!latitude || !longitude) return;
+    if (locationStatus === 'pending') return;
     setLoading(true);
     try {
-      const params: any = { lat: latitude, lng: longitude, radius: filters.radius };
+      const params: Record<string, string | number> = { radius: filters.radius };
+      if (locationStatus === 'available' && latitude && longitude) {
+        params.lat = latitude;
+        params.lng = longitude;
+      }
       if (selectedCategory) params.category = selectedCategory;
       if (searchQuery) params.search = searchQuery;
 
+      console.log(`[Frontend] User coordinates: lat=${params.lat || 'none'}, lng=${params.lng || 'none'}`);
+
       const res = await axios.get("/api/providers", { params });
-      let results: any[] = res.data.providers;
+      let results: ProviderListItem[] = res.data.providers;
+      
+      console.log(`[Frontend] Number of providers returned by API: ${results.length}`);
 
       if (filters.availableOnly) results = results.filter(p => p.isAvailable);
-      if (filters.verifiedOnly) results = results.filter(p => p.isVerified);
+      
+      if (locationStatus === 'unavailable') {
+        results = results.filter(p => p.isVerified);
+      } else if (filters.verifiedOnly) {
+        results = results.filter(p => p.isVerified);
+      }
+
       if (filters.minRating > 0) results = results.filter(p => p.avgRating >= filters.minRating);
       if (filters.maxPrice < 10000) results = results.filter(p => p.priceMin <= filters.maxPrice);
 
+      console.log(`[Frontend] Number after frontend filtering: ${results.length}`);
+
       results = [...results].sort((a, b) => {
+        if (locationStatus === 'unavailable') return b.avgRating - a.avgRating;
         if (filters.sortBy === "rating") return b.avgRating - a.avgRating;
         if (filters.sortBy === "price_low") return a.priceMin - b.priceMin;
         if (filters.sortBy === "price_high") return b.priceMax - a.priceMax;
         return (a.distance ?? 99) - (b.distance ?? 99);
       });
+      
+      console.log(`[Frontend] Final rendered count: ${results.length}`);
 
       setProviders(results);
       setTopProviders(results.filter(p => p.avgRating >= 4 && p.isAvailable).slice(0, 3));
@@ -96,16 +136,16 @@ function HirePageInner() {
     } finally {
       setLoading(false);
     }
-  }, [latitude, longitude, selectedCategory, searchQuery, filters]);
+  }, [latitude, longitude, locationStatus, selectedCategory, searchQuery, filters]);
 
   useEffect(() => {
-    if (latitude && longitude) fetchProviders();
-  }, [latitude, longitude, selectedCategory, fetchProviders]);
+    if (locationStatus !== 'pending') fetchProviders();
+  }, [locationStatus, latitude, longitude, selectedCategory, fetchProviders]);
 
   useEffect(() => {
-    const d = setTimeout(() => { if (latitude && longitude) fetchProviders(); }, 400);
+    const d = setTimeout(() => { if (locationStatus !== 'pending') fetchProviders(); }, 400);
     return () => clearTimeout(d);
-  }, [searchQuery, fetchProviders, latitude, longitude]);
+  }, [searchQuery, fetchProviders, locationStatus]);
 
   const startVoiceSearch = () => {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
@@ -113,7 +153,12 @@ function HirePageInner() {
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const win = window as unknown as {
+      SpeechRecognition?: new () => SpeechRecognitionObj;
+      webkitSpeechRecognition?: new () => SpeechRecognitionObj;
+    };
+    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
     const recognition = new SpeechRecognition();
 
     recognition.lang =
@@ -131,14 +176,14 @@ function HirePageInner() {
     setIsListening(true);
     toast("🎤 Listening... speak now!", { duration: 3000, icon: "🎙️" });
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       setSearchQuery(transcript);
       toast.success(`🎤 "${transcript}"`);
       setIsListening(false);
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionError) => {
       console.error("Speech error:", event.error);
       if (event.error === "not-allowed") {
         toast.error("Microphone access denied. Please allow microphone.");
@@ -348,12 +393,19 @@ function HirePageInner() {
           ))}
         </div>
 
+        {locationStatus === 'unavailable' && (
+          <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-700 px-4 py-3 rounded-2xl text-sm font-medium flex items-center gap-3">
+            <span className="text-xl">📍</span>
+            Location unavailable. Showing all providers.
+          </div>
+        )}
+
         {/* Top Rated */}
         {topProviders.length > 0 && !selectedCategory && !searchQuery && (
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="section-title">⭐ Top Rated</h3>
-              <span className="text-xs text-blue-600 font-medium">Within {filters.radius}km</span>
+              {locationStatus === 'available' && <span className="text-xs text-blue-600 font-medium">Within {filters.radius}km</span>}
             </div>
             <div className="space-y-3">
               {topProviders.map((p, i) => <ProviderCard key={p.id} provider={p} featured={i === 0} />)}

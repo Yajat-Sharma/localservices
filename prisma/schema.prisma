@@ -77,6 +77,10 @@ model Provider {
 
   bookings Booking[]
   reviews  Review[]
+
+  @@index([categoryId])
+  @@index([city])
+  @@index([isApproved, isAvailable])
 }
 
 model Category {
@@ -114,6 +118,10 @@ model Booking {
 
   review   Review?
   messages Message[]
+
+  @@index([customerId])
+  @@index([providerId])
+  @@index([status])
 }
 
 enum BookingStatus {
@@ -136,6 +144,8 @@ model Review {
   comment    String?
   photos     String[]
   createdAt  DateTime @default(now())
+
+  @@index([providerId])
 }
 
 model Message {
@@ -149,6 +159,8 @@ model Message {
   content    String
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
+
+  @@index([bookingId])
 }
 
 model AdminSetting {

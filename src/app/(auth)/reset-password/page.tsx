@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "@/types";
 
 function ResetPasswordPage() {
   const router = useRouter();
@@ -25,8 +26,8 @@ function ResetPasswordPage() {
       setDone(true);
       toast.success("Password reset successfully!");
       setTimeout(() => router.replace("/login"), 2000);
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to reset password");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to reset password"));
     } finally { setLoading(false); }
   };
 

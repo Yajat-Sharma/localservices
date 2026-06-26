@@ -5,18 +5,19 @@ import { TopNav } from "@/components/shared/TopNav";
 import { useAuthStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { Message, BookingListItem } from "@/types";
 
 export default function ChatPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, isLoading } = useAuthStore();
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<BookingListItem | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<any>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadMessages = useCallback(async (token: string) => {
     try {
@@ -33,7 +34,7 @@ export default function ChatPage() {
       const bRes = await axios.get("/api/bookings", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const found = bRes.data.bookings.find((b: any) => b.id === id);
+      const found = bRes.data.bookings.find((b: BookingListItem) => b.id === id);
       setBooking(found || null);
       if (found) {
         loadMessages(token!);
@@ -51,7 +52,7 @@ export default function ChatPage() {
     if (isLoading) return;
     if (!user) { router.replace("/login"); return; }
     initChat();
-    return () => clearInterval(pollRef.current);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [id, user, isLoading, initChat, router]);
 
   useEffect(() => {
@@ -125,7 +126,7 @@ export default function ChatPage() {
             ) : messages.length === 0 ? (
               <div className="text-center pt-12 text-sm" style={{ color: "var(--text-muted)" }}>No messages yet. Say hello! 👋</div>
             ) : (
-              messages.map((msg: any) => {
+              messages.map((msg: Message) => {
                 const isMe = msg.senderId === user?.id;
                 return (
                   <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>

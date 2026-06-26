@@ -5,25 +5,10 @@ import { StarRating } from "@/components/ui/StarRating";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { formatDistance } from "@/lib/geo";
 
+import { ProviderListItem } from "@/types";
+
 interface ProviderCardProps {
-  provider: {
-    id: string;
-    businessName: string;
-    description?: string;
-    avgRating: number;
-    totalReviews: number;
-    priceMin: number;
-    priceMax: number;
-    isAvailable: boolean;
-    isVerified?: boolean;
-    images: string[];
-    distance?: number;
-    whatsapp?: string;
-    totalBookings?: number;
-    address?: string;
-    user: { name?: string; avatar?: string };
-    category: { name: string; nameHi?: string; icon: string };
-  };
+  provider: ProviderListItem;
   featured?: boolean;
 }
 
@@ -42,7 +27,7 @@ export function ProviderCard({ provider, featured = false }: ProviderCardProps) 
   };
 
   const locality = provider.address ? provider.address.split(",")[0].trim() : "";
-  const isNearby = provider.distance !== undefined && provider.distance < 2;
+  const isNearby = provider.distance !== undefined && provider.distance !== null && provider.distance < 2;
 
   return (
     <Link href={`/provider/${provider.id}`}>
@@ -128,7 +113,7 @@ export function ProviderCard({ provider, featured = false }: ProviderCardProps) 
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/>
                     </svg>
-                    {formatDistance(provider.distance)}
+                    {formatDistance(provider.distance || 0)}
                   </span>
                 )}
               </div>

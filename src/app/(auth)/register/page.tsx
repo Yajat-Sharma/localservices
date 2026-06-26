@@ -3,8 +3,10 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { auth, RecaptchaVerifier, signInWithPhoneNumber, googleProvider, signInWithPopup } from "@/lib/firebase";
+import { ConfirmationResult } from "firebase/auth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
+import { User, getErrorMessage } from "@/types";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import axios from "axios";
@@ -29,7 +31,7 @@ function RegisterPageInner() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
@@ -49,9 +51,10 @@ function RegisterPageInner() {
   useEffect(() => {
     return () => {
       try {
-        if ((window as any).recaptchaVerifier) {
-          (window as any).recaptchaVerifier.clear();
-          (window as any).recaptchaVerifier = null;
+        const win = window as unknown as { recaptchaVerifier?: { clear: () => void } | null };
+        if (win.recaptchaVerifier && typeof win.recaptchaVerifier.clear === "function") {
+          win.recaptchaVerifier.clear();
+          win.recaptchaVerifier = null;
         }
       } catch {}
     };
@@ -60,15 +63,16 @@ function RegisterPageInner() {
   // ── Helpers ──────────────────────────────────────────────────────────────
   const clearRecaptcha = () => {
     try {
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.clear();
-        (window as any).recaptchaVerifier = null;
+      const win = window as unknown as { recaptchaVerifier?: { clear: () => void } | null };
+      if (win.recaptchaVerifier && typeof win.recaptchaVerifier.clear === "function") {
+        win.recaptchaVerifier.clear();
+        win.recaptchaVerifier = null;
       }
     } catch {}
     if (recaptchaContainerRef.current) recaptchaContainerRef.current.innerHTML = "";
   };
 
-  const saveSession = (token: string, userData: any) => {
+  const saveSession = (token: string, userData: User) => {
     const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
     document.cookie = `auth_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax${secureFlag}`;
     localStorage.setItem("auth_token", token);
@@ -85,8 +89,8 @@ function RegisterPageInner() {
       saveSession(res.data.token, res.data.user);
       setStep("role");
       toast.success("Account created!");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Registration failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Registration failed"));
     } finally { setLoading(false); }
   };
 
@@ -102,9 +106,9 @@ function RegisterPageInner() {
       else if (userData.role === "PROVIDER") { router.replace("/provide/dashboard"); }
       else { router.replace("/hire"); }
       toast.success("Welcome to LocalServices!");
-    } catch (err: any) {
-      if (err.code !== "auth/popup-closed-by-user") {
-        toast.error(err.response?.data?.error || "Google sign-up failed");
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code !== "auth/popup-closed-by-user") {
+        toast.error(getErrorMessage(err, "Google sign-up failed"));
       }
     } finally { setLoading(false); }
   };
@@ -116,13 +120,14 @@ function RegisterPageInner() {
       const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current!, {
         size: "invisible", callback: () => {}, "expired-callback": () => { clearRecaptcha(); },
       });
-      (window as any).recaptchaVerifier = verifier;
+      const win = window as unknown as { recaptchaVerifier?: typeof verifier };
+      win.recaptchaVerifier = verifier;
       await verifier.render();
       const result = await signInWithPhoneNumber(auth, `+91${phone}`, verifier);
       setConfirmationResult(result); setStep("otp"); setCountdown(60);
       toast.success(t("otp_sent"));
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send OTP"); clearRecaptcha();
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to send OTP")); clearRecaptcha();
     } finally { setLoading(false); }
   };
 
@@ -131,6 +136,7 @@ function RegisterPageInner() {
     if (otpStr.length !== 6) return;
     setLoading(true);
     try {
+      if (!confirmationResult) throw new Error("No confirmation result");
       const result = await confirmationResult.confirm(otpStr);
       const firebaseToken = await result.user.getIdToken();
       const res = await axios.post("/api/auth/login", { firebaseToken, phone: result.user.phoneNumber });
@@ -164,8 +170,8 @@ function RegisterPageInner() {
       toast.success(role === "PROVIDER" ? "Welcome, Provider! Let's set up your profile." : "Welcome! Let's find you great services.");
       if (role === "PROVIDER") router.replace("/provide/register");
       else router.replace("/hire");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to set role. Please try again.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to set role. Please try again."));
       setSelectedRole(null);
     } finally { setLoading(false); }
   };
@@ -216,7 +222,7 @@ function RegisterPageInner() {
                 { key: "email", label: "📧 Email" },
                 { key: "phone", label: "📱 Phone OTP" },
               ].map(m => (
-                <button key={m.key} onClick={() => setRegMethod(m.key as any)}
+                <button key={m.key} onClick={() => setRegMethod(m.key as "email" | "phone")}
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
                   style={regMethod === m.key ? {
                     background: "linear-gradient(135deg, #7c3aed, #ec4899)",

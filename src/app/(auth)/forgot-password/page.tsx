@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "@/types";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -17,8 +18,8 @@ export default function ForgotPasswordPage() {
       await axios.post("/api/auth/forgot-password", { email });
       setSent(true);
       toast.success("Reset link sent!");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to send reset email");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to send reset email"));
     } finally { setLoading(false); }
   };
 

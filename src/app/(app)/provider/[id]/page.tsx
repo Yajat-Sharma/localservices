@@ -10,6 +10,7 @@ import { useAuthStore, useLocationStore } from "@/lib/store";
 import { formatDistance } from "@/lib/geo";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { ProviderDetail, Review, getErrorMessage } from "@/types";
 
 export default function ProviderProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -17,8 +18,8 @@ export default function ProviderProfilePage() {
   const { t, language } = useLanguage();
   const { user } = useAuthStore();
   const { latitude, longitude } = useLocationStore();
-  const [provider, setProvider] = useState<any>(null);
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [provider, setProvider] = useState<ProviderDetail | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCallModal, setShowCallModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -78,9 +79,9 @@ export default function ProviderProfilePage() {
 
   // Generate available time slots from provider's working hours
   const getTimeSlots = () => {
-    const wh = provider?.workingHours as any;
-    const start = wh?.startHour ?? 8;
-    const end = wh?.endHour ?? 18;
+    const wh = provider?.workingHours as Record<string, unknown> | undefined;
+    const start = (wh?.startHour as number) ?? 8;
+    const end = (wh?.endHour as number) ?? 18;
     const slots = [];
     for (let h = start; h < end; h++) {
       const label = h < 12 ? `${h}:00 AM` : h === 12 ? "12:00 PM" : `${h - 12}:00 PM`;
@@ -91,7 +92,7 @@ export default function ProviderProfilePage() {
 
   const isDateAllowed = (dateStr: string) => {
     if (!dateStr) return true;
-    const wh = provider?.workingHours as any;
+    const wh = provider?.workingHours as Record<string, unknown> | undefined;
     if (!wh?.days) return true;
     const dayOfWeek = new Date(dateStr + "T12:00:00").getDay();
     return (wh.days as number[]).includes(dayOfWeek);
@@ -125,9 +126,9 @@ export default function ProviderProfilePage() {
         if (value < todayStr) {
           errorMsg = "Appointment date cannot be in the past.";
         } else if (!isDateAllowed(value)) {
-          const wh = provider?.workingHours as any;
+          const wh = provider?.workingHours as Record<string, unknown> | undefined;
           const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-          const allowed = (wh?.days as number[] || []).map((d: number) => days[d]).join(", ");
+          const allowed = ((wh?.days as number[]) || []).map((d: number) => days[d]).join(", ");
           errorMsg = `Provider works only on: ${allowed}`;
         }
       }
@@ -302,7 +303,7 @@ export default function ProviderProfilePage() {
 
   const fetchProvider = useCallback(async () => {
     try {
-      const params: any = {};
+      const params: Record<string, number> = {};
       if (latitude && longitude) { params.lat = latitude; params.lng = longitude; }
       const res = await axios.get(`/api/providers/${id}`, { params });
       setProvider(res.data.provider);
@@ -417,8 +418,8 @@ export default function ProviderProfilePage() {
       setErrors({});
 
       router.push("/bookings");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Booking failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Booking failed"));
     } finally {
       setIsSubmitting(false);
       setBookingLoading(false);
@@ -436,8 +437,8 @@ export default function ProviderProfilePage() {
       setShowRatingModal(false);
       setMyRating(0); setMyComment(""); setReviewPhotos([]);
       fetchProvider();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to submit review");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to submit review"));
     }
   };
 
@@ -555,7 +556,7 @@ export default function ProviderProfilePage() {
                     <circle cx="12" cy="10" r="3"/>
                     <path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/>
                   </svg>
-                  {formatDistance(provider.distance)} away
+                  {formatDistance(provider.distance || 0)} away
                 </span>
               )}
             </div>
@@ -702,7 +703,7 @@ export default function ProviderProfilePage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {reviews.map((review: any) => (
+              {reviews.map((review: Review) => (
                 <div key={review.id} className="card p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2.5">
