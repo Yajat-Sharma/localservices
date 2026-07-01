@@ -5,7 +5,7 @@ import { TopNav } from "@/components/shared/TopNav";
 import { useAuthStore, useLocationStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Category, ProviderStatusInfo, getErrorMessage } from "@/types";
+import { Category, ProviderStatusInfo, getErrorMessage, BecomeProviderForm } from "@/types";
 
 export default function SwitchAccountPage() {
   const { user, setUser } = useAuthStore();
@@ -16,7 +16,7 @@ export default function SwitchAccountPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [providerStatus, setProviderStatus] = useState<ProviderStatusInfo | null>(null);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<BecomeProviderForm>({
     businessName: "", categoryId: "", description: "",
     priceMin: "", priceMax: "", serviceRadius: "5",
     address: "", city: "", state: "", pincode: "",

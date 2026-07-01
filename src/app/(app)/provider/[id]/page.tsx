@@ -212,7 +212,7 @@ export default function ProviderProfilePage() {
           } else {
             toast.error("Geocoding service unavailable.");
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("Geocoding error:", error);
           toast.error("Failed to fetch address. Please type it manually.");
         } finally {
@@ -261,7 +261,7 @@ export default function ProviderProfilePage() {
         if (draft.scheduledDate) setScheduledDate(draft.scheduledDate);
         if (draft.scheduledTime) setScheduledTime(draft.scheduledTime);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to load booking draft:", err);
     } finally {
       setDraftLoaded(true);
@@ -276,7 +276,7 @@ export default function ProviderProfilePage() {
     if (!hasValue) {
       try {
         localStorage.removeItem(`booking_draft_${id}`);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Failed to clear empty booking draft:", err);
       }
       return;
@@ -293,7 +293,7 @@ export default function ProviderProfilePage() {
           scheduledTime
         };
         localStorage.setItem(`booking_draft_${id}`, JSON.stringify(draft));
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Failed to save booking draft:", err);
       }
     }, 400); // 400ms debounce
@@ -404,7 +404,7 @@ export default function ProviderProfilePage() {
       // Clear draft on successful submission
       try {
         localStorage.removeItem(`booking_draft_${id}`);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Failed to clear booking draft:", err);
       }
 

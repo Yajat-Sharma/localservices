@@ -6,7 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore, useLocationStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Category, User, getErrorMessage } from "@/types";
+import { Category, User, getErrorMessage, RegisterProviderForm } from "@/types";
 
 export default function ProviderRegisterPage() {
   const { t } = useLanguage();
@@ -16,7 +16,7 @@ export default function ProviderRegisterPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [freeSlots, setFreeSlots] = useState(50);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ businessName:"", categoryId:"", description:"", priceMin:"", priceMax:"", address:"", city:"", state:"", pincode:"", whatsapp:"", allowMultiple:false });
+  const [form, setForm] = useState<RegisterProviderForm>({ businessName:"", categoryId:"", description:"", priceMin:"", priceMax:"", address:"", city:"", state:"", pincode:"", whatsapp:"", allowMultiple:false });
 
   useEffect(() => {
     if (isLoading) return;

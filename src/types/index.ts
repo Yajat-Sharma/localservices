@@ -224,3 +224,79 @@ export function getErrorMessage(err: unknown, fallback = "Something went wrong")
   if (err instanceof Error) return err.message;
   return fallback;
 }
+
+// ─── Admin Dashboard Types ──────────────────────────────────────────
+
+/** Admin overview stats card data. */
+export interface AdminStats {
+  users: number;
+  providers: number;
+  bookings: number;
+  pendingProviders: number;
+}
+
+/** Admin analytics tab data. */
+export interface AdminAnalytics {
+  bookingsPerDay: { date: string; count: number }[];
+  revenueByCategory: { name: string; icon: string; revenue: number; bookings: number }[];
+  topProviders: { name: string; revenue: number; bookings: number; rating: number; category: string; icon: string }[];
+  funnelData: { stage: string; count: number }[];
+}
+
+// ─── Page-Level Form Types ──────────────────────────────────────────
+
+/** Hire page filter state. */
+export interface HireFilters {
+  minRating: number;
+  maxPrice: number;
+  availableOnly: boolean;
+  verifiedOnly: boolean;
+  radius: number;
+  sortBy: string;
+}
+
+/** Provider edit-profile form state. */
+export interface EditProviderForm {
+  description: string;
+  priceMin: string;
+  priceMax: string;
+  whatsapp: string;
+  phone: string;
+  allowMultiple: boolean;
+  workingHours: {
+    startHour: number;
+    endHour: number;
+    days: number[];
+  };
+}
+
+/** Provider registration form state. */
+export interface RegisterProviderForm {
+  businessName: string;
+  categoryId: string;
+  description: string;
+  priceMin: string;
+  priceMax: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  whatsapp: string;
+  allowMultiple: boolean;
+}
+
+/** Become-a-provider form state (switch-account page). */
+export interface BecomeProviderForm {
+  businessName: string;
+  categoryId: string;
+  description: string;
+  priceMin: string;
+  priceMax: string;
+  serviceRadius: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  whatsapp: string;
+  allowMultiple: boolean;
+}

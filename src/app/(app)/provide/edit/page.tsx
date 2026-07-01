@@ -6,14 +6,14 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore } from "@/lib/store";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { ProviderDetail, User, getErrorMessage } from "@/types";
+import { ProviderDetail, User, getErrorMessage, EditProviderForm } from "@/types";
 
 export default function ProviderEditPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const { user, setUser } = useAuthStore();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<EditProviderForm>({
     description: "",
     priceMin: "",
     priceMax: "",

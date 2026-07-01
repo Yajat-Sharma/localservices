@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { ProviderDetail, CategoryCount } from "@/types";
+import { ProviderDetail, CategoryCount, AdminStats, AdminAnalytics } from "@/types";
 
 const COLORS = ["#0c8ee8", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 const FUNNEL_COLORS = ["#94a3b8", "#60a5fa", "#f59e0b", "#10b981", "#ef4444"];
@@ -20,19 +20,14 @@ export default function AdminPage() {
   const { t } = useLanguage();
   const { user } = useAuthStore();
   const router = useRouter();
-  const [stats, setStats] = useState({ users: 0, providers: 0, bookings: 0, pendingProviders: 0 });
+  const [stats, setStats] = useState<AdminStats>({ users: 0, providers: 0, bookings: 0, pendingProviders: 0 });
   const [pendingProviders, setPendingProviders] = useState<ProviderDetail[]>([]);
   const [allProviders, setAllProviders] = useState<ProviderDetail[]>([]);
   const [docProviders, setDocProviders] = useState<ProviderDetail[]>([]);
   const [tab, setTab] = useState<"stats" | "pending" | "all" | "documents" | "analytics">("stats");
   const [loading, setLoading] = useState(true);
   const [viewingProvider, setViewingProvider] = useState<ProviderDetail | null>(null);
-  const [analytics, setAnalytics] = useState<{
-    bookingsPerDay: { date: string; count: number }[];
-    revenueByCategory: { name: string; icon: string; revenue: number; bookings: number }[];
-    topProviders: { name: string; revenue: number; bookings: number; rating: number; category: string; icon: string }[];
-    funnelData: { stage: string; count: number }[];
-  } | null>(null);
+  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [dateRange, setDateRange] = useState<7 | 30 | 90>(30);
 
@@ -421,7 +416,7 @@ export default function AdminPage() {
                         <Tooltip
                           contentStyle={{ background: "#1e293b", border: "none", borderRadius: "12px", fontSize: "12px" }}
                           labelStyle={{ color: "#94a3b8" }}
-                          formatter={(value: any, name: any) => [
+                          formatter={(value: number | string | readonly (number | string)[] | undefined, name: string | number | undefined) => [
                             name === "revenue" ? `₹${Number(value).toLocaleString("en-IN")}` : value,
                             name === "revenue" ? "Revenue" : "Bookings",
                           ]}

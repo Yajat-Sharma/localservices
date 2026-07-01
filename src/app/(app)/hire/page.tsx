@@ -5,7 +5,7 @@ import { TopNav } from "@/components/shared/TopNav";
 import { ProviderCard } from "@/components/provider/ProviderCard";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuthStore, useLocationStore } from "@/lib/store";
-import { Category, ProviderListItem } from "@/types";
+import { Category, ProviderListItem, HireFilters } from "@/types";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -49,7 +49,7 @@ function HirePageInner() {
   const [isListening, setIsListening] = useState(false);
   const [locationStatus, setLocationStatus] = useState<'pending' | 'available' | 'unavailable'>('pending');
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<HireFilters>({
     minRating: 0,
     maxPrice: 10000,
     availableOnly: false,
